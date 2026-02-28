@@ -1,0 +1,4569 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AarogyaPath — Full UI Prototype</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    /* ─────────────────────────────────────────────
+   DESIGN TOKENS
+───────────────────────────────────────────── */
+    :root {
+      --clay: #E8673A;
+      --clay-d: #C94F25;
+      --clay-l: #FFE8D6;
+      --gold: #F5A623;
+      --gold-d: #D48510;
+      --gold-l: #FFF5E4;
+      --leaf: #3DAA6E;
+      --leaf-d: #2A7A4E;
+      --leaf-l: #E8F5EE;
+      --sky: #4A9FD4;
+      --sky-l: #D4EAF7;
+      --mud: #2E1B0E;
+      --sub: #7A5C45;
+      --cream: #FDF3E3;
+      --white: #FFFFFF;
+      --red: #D94F3D;
+      --red-l: #FDECEA;
+      --border: #EAD9C8;
+      --purple: #6C5CE7;
+      --purple-l: #EDE9FF;
+
+      --r-xl: 24px;
+      --r-lg: 16px;
+      --r-md: 12px;
+      --r-pill: 100px;
+
+      --sh: 0 4px 16px rgba(74, 55, 40, 0.09);
+      --sh-lg: 0 8px 32px rgba(74, 55, 40, 0.13);
+      --sh-fab: 0 6px 24px rgba(232, 103, 58, 0.40);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Noto Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 24px 16px 40px;
+      background: #B0A090;
+      background-image:
+        radial-gradient(circle at 15% 25%, rgba(232, 103, 58, .18) 0%, transparent 50%),
+        radial-gradient(circle at 85% 75%, rgba(61, 170, 110, .15) 0%, transparent 50%);
+      flex-wrap: wrap;
+    }
+
+    /* ─────────────────────────────────────────────
+   NAV PANEL
+───────────────────────────────────────────── */
+    .nav-panel {
+      background: rgba(255, 255, 255, .14);
+      border: 1px solid rgba(255, 255, 255, .22);
+      border-radius: 20px;
+      padding: 20px 14px;
+      backdrop-filter: blur(12px);
+      width: 170px;
+      flex-shrink: 0;
+      align-self: flex-start;
+      position: sticky;
+      top: 24px;
+    }
+
+    .nav-panel h3 {
+      font-family: 'Baloo 2', cursive;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, .5);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      padding-left: 4px;
+    }
+
+    .np-section {
+      font-size: 9px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, .35);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin: 14px 0 6px 4px;
+    }
+
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-bottom: 4px;
+      font-family: 'Baloo 2', cursive;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, .65);
+      transition: all .2s;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, .12);
+      color: white;
+    }
+
+    .nav-btn.cur {
+      background: rgba(255, 255, 255, .22);
+      color: white;
+    }
+
+    .nav-btn span:first-child {
+      font-size: 17px;
+    }
+
+    /* ─────────────────────────────────────────────
+   DEVICE SHELL
+───────────────────────────────────────────── */
+    .device {
+      width: 390px;
+      height: 844px;
+      background: var(--cream);
+      border-radius: 50px;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+      box-shadow:
+        0 0 0 11px #1C1C1E,
+        0 0 0 13px #3A3A3C,
+        0 50px 100px rgba(0, 0, 0, .55);
+    }
+
+    .dyn-island {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 34px;
+      background: #1C1C1E;
+      border-radius: 20px;
+      z-index: 200;
+    }
+
+    /* ─────────────────────────────────────────────
+   SCREENS
+───────────────────────────────────────────── */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      animation: fadeUp .3s cubic-bezier(.34, 1.56, .64, 1) both;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(.97);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* Status bar */
+    .sbar {
+      height: 50px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 22px 8px;
+      flex-shrink: 0;
+      z-index: 10;
+      position: relative;
+    }
+
+    .sbar-t {
+      font-family: 'Baloo 2', cursive;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .sbar-r {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    /* Scroll container */
+    .scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 16px 120px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Section label */
+    .slabel {
+      font-family: 'Baloo 2', cursive;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--sub);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    /* Divider */
+    .div {
+      height: 1px;
+      background: var(--border);
+      margin: 14px 0;
+    }
+
+    /* Blank */
+    .gap {
+      height: 16px;
+    }
+
+    /* Back row */
+    .back-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .back-btn {
+      width: 38px;
+      height: 38px;
+      background: rgba(255, 255, 255, .22);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      flex-shrink: 0;
+      transition: background .2s;
+    }
+
+    .back-btn:active {
+      background: rgba(255, 255, 255, .35);
+    }
+
+    /* ─────────────────────────────────────────────
+   BOTTOM NAV (Patient)
+───────────────────────────────────────────── */
+    .bnav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      display: flex;
+      padding: 10px 0 28px;
+      z-index: 100;
+      box-shadow: 0 -6px 24px rgba(46, 27, 14, .07);
+    }
+
+    .bni {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 2px 0;
+    }
+
+    .bni-ic {
+      width: 50px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      font-size: 22px;
+      transition: all .25s cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    .bni.on .bni-ic {
+      background: var(--leaf-l);
+      transform: scale(1.12);
+    }
+
+    .bni-lb {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--sub);
+    }
+
+    .bni.on .bni-lb {
+      color: var(--leaf-d);
+    }
+
+    .bni-gap {
+      width: 70px;
+      flex-shrink: 0;
+    }
+
+    /* Voice FAB */
+    .vfab {
+      position: absolute;
+      bottom: 58px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--clay), var(--clay-d));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      z-index: 110;
+      cursor: pointer;
+      border: 3px solid var(--white);
+      box-shadow: var(--sh-fab), 0 0 0 5px rgba(232, 103, 58, .12);
+      transition: transform .2s;
+    }
+
+    .vfab:active {
+      transform: translateX(-50%) scale(.9);
+    }
+
+    .vfab::after {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      border: 2px solid rgba(232, 103, 58, .3);
+      animation: vring 2.5s ease-out infinite;
+    }
+
+    @keyframes vring {
+      0% {
+        transform: scale(1);
+        opacity: 1
+      }
+
+      100% {
+        transform: scale(1.5);
+        opacity: 0
+      }
+    }
+
+    /* SOS */
+    .sos-fab {
+      position: absolute;
+      bottom: 72px;
+      right: 16px;
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, var(--red), #B83525);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      font-family: 'Baloo 2', cursive;
+      z-index: 110;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(217, 79, 61, .5), 0 0 0 3px rgba(217, 79, 61, .15);
+      transition: transform .15s;
+    }
+
+    .sos-fab:active {
+      transform: scale(.9);
+    }
+
+    /* ─────────────────────────────────────────────
+   REUSABLE COMPONENTS
+───────────────────────────────────────────── */
+    .card {
+      background: var(--white);
+      border-radius: var(--r-xl);
+      padding: 16px;
+      box-shadow: var(--sh);
+    }
+
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      border-radius: var(--r-pill);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .btn-primary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 52px;
+      border-radius: var(--r-pill);
+      background: linear-gradient(135deg, var(--leaf), var(--leaf-d));
+      color: white;
+      font-family: 'Baloo 2', cursive;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(61, 170, 110, .3);
+      border: none;
+      outline: none;
+      width: 100%;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .btn-primary:active {
+      transform: scale(.97);
+      box-shadow: 0 3px 10px rgba(61, 170, 110, .2);
+    }
+
+    .offline-bar {
+      background: #FFF3CD;
+      border-bottom: 1px solid rgba(245, 166, 35, .25);
+      padding: 7px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .offline-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--gold);
+      border-radius: 50%;
+    }
+
+    .offline-txt {
+      font-size: 11px;
+      color: #856404;
+      font-weight: 600;
+    }
+
+    /* ─────────────────────────────────────────────
+   SCREEN 1 — SPLASH
+───────────────────────────────────────────── */
+    #splash {
+      background: linear-gradient(160deg, #3DAA6E 0%, #2A7A4E 55%, #1D5538 100%);
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .m-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1.5px dashed rgba(255, 255, 255, .12);
+    }
+
+    .m1 {
+      width: 340px;
+      height: 340px;
+      top: -80px;
+      right: -100px;
+      animation: spin 25s linear infinite;
+    }
+
+    .m2 {
+      width: 220px;
+      height: 220px;
+      bottom: 60px;
+      left: -70px;
+      animation: spin 18s linear infinite reverse;
+      border-style: solid;
+      border-color: rgba(245, 166, 35, .18);
+    }
+
+    .m3 {
+      width: 160px;
+      height: 160px;
+      top: 30%;
+      right: -30px;
+      animation: spin 12s linear infinite;
+      border-color: rgba(255, 255, 255, .07);
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .splash-logo {
+      width: 110px;
+      height: 110px;
+      background: rgba(255, 255, 255, .14);
+      border-radius: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 58px;
+      margin-bottom: 28px;
+      position: relative;
+      z-index: 1;
+      border: 1.5px solid rgba(255, 255, 255, .25);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, .2);
+      animation: float 3.5s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-10px)
+      }
+    }
+
+    .splash-title {
+      font-family: 'Baloo 2', cursive;
+      font-size: 44px;
+      font-weight: 800;
+      color: white;
+      letter-spacing: -1.5px;
+      text-align: center;
+      line-height: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    .splash-sub {
+      font-size: 14px;
+      color: rgba(255, 255, 255, .68);
+      margin-top: 8px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .splash-tag {
+      font-size: 11px;
+      color: rgba(255, 255, 255, .45);
+      margin-top: 4px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .splash-hint {
+      position: absolute;
+      bottom: 70px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, .4);
+      font-family: 'Baloo 2', cursive;
+      font-weight: 600;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: .4
+      }
+
+      50% {
+        opacity: .9
+      }
+    }
+
+    .lang-dots {
+      position: absolute;
+      bottom: 120px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .ldot {
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, .12);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: rgba(255, 255, 255, .8);
+      font-weight: 700;
+      border: 1px solid rgba(255, 255, 255, .22);
+      cursor: pointer;
+      font-family: 'Noto Sans', sans-serif;
+      transition: all .2s;
+    }
+
+    .ldot.sel {
+      background: rgba(255, 255, 255, .28);
+      border-color: rgba(255, 255, 255, .6);
+    }
+
+    /* ─────────────────────────────────────────────
+   SCREEN 2 — ONBOARDING
+───────────────────────────────────────────── */
+    #onboard {
+      background: var(--cream);
+    }
+
+    .ob-hdr {
+      width: 100%;
+      padding: 54px 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      margin-bottom: 8px;
+    }
+
+    .ob-prog {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      flex: 1;
+      margin: 0 20px;
+    }
+
+    .ob-prog-fill {
+      height: 100%;
+      background: var(--leaf);
+      border-radius: 2px;
+      transition: width .4s;
+    }
+
+    .ob-slide {
+      width: 100%;
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 28px 60px;
+    }
+
+    .ob-slide.active {
+      display: flex;
+    }
+
+    .ob-hero {
+      width: 100%;
+      height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 120px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+      border-radius: 0 0 32px 32px;
+    }
+
+    .ob-step {
+      margin-top: 32px;
+      font-family: 'Baloo 2', cursive;
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--mud);
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .ob-desc {
+      margin-top: 12px;
+      font-size: 15px;
+      color: var(--sub);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .ob-dots {
+      display: flex;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .ob-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: all .3s;
+    }
+
+    .ob-dot.on {
+      width: 24px;
+      border-radius: 4px;
+      background: var(--leaf);
+    }
+
+    .ob-btn {
+      width: 100%;
+      height: 56px;
+      background: linear-gradient(135deg, var(--leaf), var(--leaf-d));
+      border-radius: var(--r-pill);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Baloo 2', cursive;
+      font-size: 17px;
+      font-weight: 700;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(61, 170, 110, .3);
+      margin-top: 24px;
+      border: none;
+      transition: transform .2s;
+    }
+
+    .ob-btn:active {
+      transform: scale(.97);
+    }
+
+    .ob-skip {
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--sub);
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* ─────────────────────────────────────────────
+   SCREEN 3 — HOME (Patient)
+───────────────────────────────────────────── */
+    #home {
+      background: var(--cream);
+    }
+
+    .hm-hdr {
+      background: linear-gradient(135deg, var(--leaf), var(--leaf-d));
+      padding: 52px 20px 24px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hm-ring1 {
+      position: absolute;
+      right: -40px;
+      top: -40px;
+      width: 200px;
+      height: 200px;
+      background: rgba(255, 255, 255, .06);
+      border-radius: 50%;
+    }
+
+    .hm-ring2 {
+      position: absolute;
+      right: 30px;
+      top: 20px;
+      width: 80px;
+      height: 80px;
+      background: rgba(245, 166, 35, .15);
+      border-radius: 50%;
+    }
+
+    .hm-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .hm-namaste {
+      font-size: 11px;
+      color: rgba(255, 255, 255, .65);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .hm-name {
+      font-family: 'Baloo 2', cursive;
+      font-size: 30px;
+      font-weight: 800;
+      color: white;
+      line-height: 1;
+    }
+
+    .hm-loc {
+      font-size: 12px;
+      color: rgba(255, 255, 255, .6);
+      margin-top: 4px;
+    }
+
+    .hm-avatar {
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, .18);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      border: 2px solid rgba(255, 255, 255, .3);
+      cursor: pointer;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .health-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, .15);
+      border: 1px solid rgba(255, 255, 255, .22);
+      border-radius: var(--r-pill);
+      padding: 8px 16px;
+      margin-top: 18px;
+      position: relative;
+      z-index: 1;
+      cursor: pointer;
+    }
+
+    .hc-dot {
+      width: 8px;
+      height: 8px;
+      background: #7FE5A8;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .hc-txt {
+      font-size: 12px;
+      color: white;
+      font-weight: 600;
+    }
+
+    /* Action grid */
+    .agrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .acard {
+      border-radius: var(--r-xl);
+      padding: 20px 16px;
+      min-height: 148px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--sh);
+      transition: transform .2s;
+      border: none;
+      outline: none;
+    }
+
+    .acard:active {
+      transform: scale(.95);
+    }
+
+    .acard::before {
+      content: '';
+      position: absolute;
+      right: -18px;
+      top: -18px;
+      width: 90px;
+      height: 90px;
+      background: rgba(255, 255, 255, .12);
+      border-radius: 50%;
+    }
+
+    .ac-s1 {
+      background: linear-gradient(145deg, #FF9070, var(--clay));
+    }
+
+    .ac-s2 {
+      background: linear-gradient(145deg, #60D090, var(--leaf));
+    }
+
+    .ac-s3 {
+      background: linear-gradient(145deg, #FFD980, var(--gold));
+    }
+
+    .ac-s4 {
+      background: linear-gradient(145deg, #80CCEE, var(--sky));
+    }
+
+    .ac-icon {
+      font-size: 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .ac-label {
+      font-family: 'Baloo 2', cursive;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      line-height: 1.2;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, .1);
+    }
+
+    .ac-sub {
+      font-size: 11px;
+      color: rgba(255, 255, 255, .75);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Appointment card */
+    .appt-card {
+      background: var(--white);
+      border-radius: var(--r-xl);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 22px;
+      box-shadow: var(--sh);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform .2s;
+    }
+
+    .appt-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--leaf);
+      border-radius: 4px 0 0 4px;
+    }
+
+    .appt-card:active {
+      transform: scale(.98);
+    }
+
+    .ap-av {
+      width: 54px;
+      height: 54px;
+      background: linear-gradient(135deg, #E8F5EE, #C8EAD6);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+
+    .ap-doc {
+      font-family: 'Baloo 2', cursive;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--mud);
+    }
+
+    .ap-time {
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: 2px;
+    }
+
+    .ap-badge {
+      background: var(--leaf-l);
+      color: var(--leaf-d);
+      border-radius: var(--r-pill);
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    /* Vitals row */
+    .vrow {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .vcard {
+      flex: 1;
+      background: white;
+      border-radius: var(--r-lg);
+      padding: 14px 12px;
+      box-shadow: var(--sh);
+      cursor: pointer;
+    }
+
+    .vcard:active {
+      transform: scale(.97);
+    }
+
+    .vc-val {
+      font-family: 'Baloo 2', cursive;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--mud);
+    }
+
+    .vc-unit {
+      font-size: 10px;
+      color: var(--sub);
+    }
+
+    .vc-label {
+      font-size: 11px;
+      color: var(--sub);
+    }
+
+    .vc-bar {
+      width: 100%;
+      height: 3px;
+      border-radius: 2px;
+      margin-top: 6px;
+    }
+
+    /* Language strip */
+    .lstrip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 22px;
+    }
+
+    .lstrip::-webkit-scrollbar {
+      display: none;
+    }
+
+    .lpill {
+      flex-shrink: 0;
+      padding: 8px 18px;
+      border-radius: var(--r-pill);
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Noto Sans', sans-serif;
+      cursor: pointer;
+      transition: all .2s;
+      border: 2px solid var(--border);
+    }
+
+    .lpill.on {
+      background: var(--clay);
+      color: white;
+      border-color: var(--clay);
+    }
+
+    .lpill.off {
+      background: white;
+      color: var(--sub);
+    }
+
+    /* Tip card */
+    .tip-card {
+      background: linear-gradient(135deg, #FFF5E4, #FFE8C4);
+      border-radius: var(--r-xl);
+      padding: 16px 18px;
+      border: 1.5px solid rgba(245, 166, 35, .3);
+      display: flex;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .tip-icon {
+      font-size: 30px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .tip-title {
+      font-family: 'Baloo 2', cursive;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--mud);
+      margin-bottom: 4px;
+    }
+
+    .tip-txt {
+      font-size: 12px;
+      color: var(--sub);
+      line-height: 1.6;
+    }
+
+    /* ─────────────────────────────────────────────
+   SCREEN 4 — SYMPTOM CHECKER
+───────────────────────────────────────────── */
+    #symptom {
+      background: var(--cream);
+    }
+
+    .sym-hdr {
+      background: linear-gradient(135deg, var(--clay), var(--clay-d));
+      padding: 52px 20px 20px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sym-hdr::after {
+      content: '';
+      position: absolute;
+      right: -30px;
+      bottom: -30px;
+      width: 120px;
+      height: 120px;
+      background: rgba(255, 255, 255, .08);
+      border-radius: 50%;
+    }
+
+    .sh-title {
+      font-family: 'Baloo 2', cursive;
+      font-size: 24px;
+      font-weight: 800;
+      color: white;
+      flex: 1;
+    }
+
+    .sh-sub {
+      font-size: 13px;
+      color: rgba(255, 255, 255, .68);
+    }
+
+    .triage-pills {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .tpill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255, 255, 255, .12);
+      border-radius: var(--r-pill);
+      padding: 5px 10px;
+      font-size: 10px;
+      color: white;
+      font-weight: 600;
+    }
+
+    .tpill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    /* Chat */
+    .chat-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .chat-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .brow {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .brow.user {
+      flex-direction: row-reverse;
+    }
+
+    .bav {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .bav.ai {
+      background: linear-gradient(135deg, #E8F5EE, #C8EAD6);
+    }
+
+    .bav.user {
+      background: linear-gradient(135deg, #FFE8D6, #FFCFAD);
+    }
+
+    .bwrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .bubble {
+      max-width: 74%;
+      padding: 12px 16px;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .bubble.ai {
+      background: white;
+      color: var(--mud);
+      border-radius: 4px 20px 20px 20px;
+      box-shadow: var(--sh);
+    }
+
+    .bubble.user {
+      background: linear-gradient(135deg, var(--clay), var(--clay-d));
+      color: white;
+      border-radius: 20px 4px 20px 20px;
+    }
+
+    .btime {
+      font-size: 10px;
+      color: var(--sub);
+      margin-top: 5px;
+      padding: 0 4px;
+    }
+
+    .btime.user {
+      text-align: right;
+    }
+
+    .listen-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 8px;
+      background: var(--leaf-l);
+      border-radius: var(--r-pill);
+      padding: 5px 12px;
+      font-size: 11px;
+      color: var(--leaf-d);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .listen-btn:active {
+      background: #C8EAD6;
+    }
+
+    /* Triage card */
+    .triage-card {
+      background: white;
+      border-radius: var(--r-xl);
+      padding: 16px;
+      box-shadow: var(--sh);
+      border-left: 4px solid var(--gold);
+    }
+
+    .tc-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--sub);
+      margin-bottom: 8px;
+    }
+
+    .tc-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tc-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .tc-title {
+      font-family: 'Baloo 2', cursive;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--mud);
+    }
+
+    .tc-sub {
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    .tc-btns {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .tc-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: var(--r-pill);
+      text-align: center;
+      font-weight: 700;
+      font-size: 13px;
+      font-family: 'Baloo 2', cursive;
+      cursor: pointer;
+    }
+
+    /* Quick picks */
+    .quick-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 10px 16px 0;
+      flex-shrink: 0;
+    }
+
+    .qpick {
+      padding: 8px 14px;
+      background: white;
+      border-radius: var(--r-pill);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--sub);
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .qpick:active {
+      background: var(--clay);
+      color: white;
+      border-color: var(--clay);
+    }
+
+    /* Chat input */
+    .chat-bar {
+      background: white;
+      border-top: 1px solid var(--border);
+      padding: 12px 16px 30px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .chat-field {
+      flex: 1;
+      background: var(--cream);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-pill);
+      padding: 12px 18px;
+      font-size: 14px;
+      font-family: 'Noto Sans', sans-serif;
+      color: var(--mud);
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .chat-field:focus {
+      border-color: var(--clay);
+    }
+
+    .chat-mic {
+      width: 50px;
+      height: 50px;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, var(--clay), var(--clay-d));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(232, 103, 58, .4);
+      transition: transform .2s;
+    }
+
+    .chat-mic:active {
+      transform: scale(.9);
+    }
+
+    /* Typing indicator */
+    .typing {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      padding: 12px 16px;
+    }
+
+    .td {
+      width: 8px;
+      height: 8px;
+      background: var(--border);
+      border-radius: 50%;
+    }
+
+    .td:nth-child(1) {
+      animation: td 1.2s 0s ease-in-out infinite;
+    }
+
+    .td:nth-child(2) {
+      animation: td 1.2s .2s ease-in-out infinite;
+    }
+
+    .td:nth-child(3) {
+      animation: td 1.2s .4s ease-in-out infinite;
+    }
+
+    @keyframes td {
+
+      0%,
+      80%,
+      100% {
+        transform: scale(1);
+        background: var(--border)
+      }
+
+      40% {
+        transform: scale(1.3);
+        background: var(--sub)
+      }
+    }
+
+    /* ─────────────────────────────────────────────
+   SCREEN 5 — DOCTOR / CONSULTATION
+───────────────────────────────────────────── */
+    #doctor {
+      background: var(--cream);
+    }
+
+    .doc-hdr {
+      background: linear-gradient(135deg, var(--leaf), var(--leaf-d));
+      padding: 52px 20px 20px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .doc-hdr::after {
+      content: '';
+      position: absolute;
+      right: -20px;
+      bottom: -20px;
+      width: 130px;
+      height: 130px;
+      background: rgba(255, 255, 255, .07);
+      border-radius: 50%;
+    }
+
+    /* Queue banner */
+    .q-banner {
+      background: var(--white);
+      border-radius: var(--r-xl);
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: var(--sh);
+    }
+
+    .qb-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .qb-num {
+      font-family: 'Baloo 2', cursive;
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--leaf-d);
+    }
+
+    .qb-lbl {
+      font-size: 11px;
+      color: var(--sub);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .qb-est {
+      font-family: 'Baloo 2', cursive;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--mud);
+      text-align: right;
+    }
+
+    .qb-el {
+      font-size: 11px;
+      color: var(--sub);
+      text-align: right;
+    }
+
+    .qbar {
+      width: 100%;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .qbar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--leaf), var(--gold));
+      border-radius: 3px;
+      width: 60%;
+    }
+
+    .qbar-sub {
+      font-size: 11px;
+      color: var(--sub);
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    /* Doctor card */
+    .doc-card {
+      background: white;
+      border-radius: var(--r-xl);
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--sh);
+      cursor: pointer;
+      transition: transform .2s;
+    }
+
+    .doc-card:active {
+      transform: scale(.98);
+    }
+
+    .dc-top {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .dc-av {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #E8F5EE, #C8EAD6);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      flex-shrink: 0;
+    }
+
+    .dc-name {
+      font-family: 'Baloo 2', cursive;
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--mud);
+    }
+
+    .dc-spec {
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: 2px;
+    }
+
+    .dc-rat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 6px;
+    }
+
+    .dc-stars {
+      color: var(--gold);
+      font-size: 13px;
+    }
+
+    .dc-rn {
+      font-size: 12px;
+      color: var(--sub);
+    }
+
+    .dc-langs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .dc-lang {
+      padding: 4px 10px;
+      background: var(--leaf-l);
+      border-radius: var(--r-pill);
+      font-size: 11px;
+      color: var(--leaf-d);
+      font-weight: 600;
+    }
+
+    .dc-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .dc-btn {
+      flex: 1;
+      height: 44px;
+      border-radius: var(--r-pill);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: 'Baloo 2', cursive;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      outline: none;
+      transition: all .2s;
+    }
+
+    .dc-btn.p {
+      background: linear-gradient(135deg, var(--leaf), var(--leaf-d));
+      color: white;
+      box-shadow: 0 4px 12px rgba(61, 170, 110, .3);
+    }
+
+    .dc-btn.s {
+      background: white;
+      color: var(--leaf-d);
+      border: 2px solid var(--leaf-l);
+    }
+
+    .dc-btn:active {
+      transform: scale(.96);
+    }
+
+    /* Video call overlay */
+    .vcall-ov {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(160deg, #1D3D2A, #0A1F15);
+      z-index: 300;
+      flex-direction: column;
+      padding: 52px 20px 40px;
+    }
+
+    .vcall-ov.show {
+      display: flex;
+    }
+
+    .vc-remote {
+      flex: 1;
+      background: rgba(255, 255, 255, .05);
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .1);
+    }
+
+    .vc-remote::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, .3));
+    }
+
+    .vc-face {
+      font-size: 70px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .vc-dname {
+      font-family: 'Baloo 2', cursive;
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+      position: relative;
+      z-index: 1;
+    }
+
+    .vc-status {
+      font-size: 12px;
+      color: rgba(255, 255, 255, .5);
+      position: relative;
+      z-index: 1;
+      animation: pulse 2s infinite;
+    }
+
+    .vc-local {
+      position: absolute;
+      top: 70px;
+      right: 30px;
+      width: 90px;
+      height: 120px;
+      background: rgba(255, 255, 255, .08);
+      border-radius: 16px;
+      border: 2px solid rgba(255, 255, 255, .2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      z-index: 310;
+    }
+
+    .vc-controls {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .vc-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .vc-btn.on {
+      background: rgba(255, 255, 255, .15);
+    }
+
+    .vc-btn.end {
+      background: var(--red);
+      box-shadow: 0 4px 16px rgba(217, 79, 61, .4);
+    }
+
+    .vc-btn:active {
+      transform: scale(.9);
+    }
+
+    .vc-timer {
+      text-align: center;
+      margin-top: 12px;
+      font-family: 'Baloo 2', cursive;
+      font-size: 22px;
+      font-weight: 700;
+      color: white;
+    }
+
+    /* ─────────────────────────────────────────────
+   SCREEN 6 — NEARBY
+───────────────────────────────────────────── */
+    #nearby {
+      background: var(--cream);
+    }
+
+    .map-zone {
+      height: 230px;
+      background: linear-gradient(160deg, #D4EAF7, #B0D0E8);
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .mz-grid {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, .25)1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .25)1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    .mz-road1 {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 45%;
+      height: 12px;
+      background: rgba(255, 255, 255, .6);
+    }
+
+    .mz-road2 {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 35%;
+      width: 10px;
+      background: rgba(255, 255, 255, .5);
+    }
+
+    .mp {
+      position: absolute;
+      font-size: 28px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .2));
+    }
+
+    .mp1 {
+      top: 22%;
+      left: 28%;
+      animation: float 3.5s ease-in-out infinite;
+    }
+
+    .mp2 {
+      top: 58%;
+      left: 60%;
+      animation: float 3.5s 1s ease-in-out infinite;
+    }
+
+    .mp3 {
+      top: 15%;
+      left: 68%;
+      animation: float 3.5s .5s ease-in-out infinite;
+    }
+
+    .mp4 {
+      top: 65%;
+      left: 18%;
+      animation: float 3.5s 1.5s ease-in-out infinite;
+    }
+
+    .map-you {
+      position: absolute;
+      top: 46%;
+      left: 44%;
+      width: 18px;
+      height: 18px;
+      background: var(--clay);
+      border-radius: 50%;
+      border: 3px solid white;
+      box-shadow: 0 0 0 6px rgba(232, 103, 58, .2);
+    }
+
+    .map-you::after {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2px solid rgba(232, 103, 58, .4);
+      animation: vring 2s infinite;
+    }
+
+    .map-topbar {
+      position: absolute;
+      top: 56px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      z-index: 10;
+    }
+
+    .mtb-back {
+      width: 40px;
+      height: 40px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      box-shadow: var(--sh);
+    }
+
+    .mtb-title {
+      background: white;
+      border-radius: var(--r-pill);
+      padding: 8px 18px;
+      font-family: 'Baloo 2', cursive;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--mud);
+      box-shadow: var(--sh);
+    }
+
+    .fstrip {
+      display: flex;
+      gap: 8px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+
+    .fstrip::-webkit-scrollbar {
+      display: none;
+    }
+
+    .fpill {
+      flex-shrink: 0;
+      padding: 8px 16px;
+      border-radius: var(--r-pill);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      border: 1.5px solid var(--border);
+      background: white;
+      color: var(--sub);
+    }
+
+    .fpill.on {
+      background: var(--sky);
+      color: white;
+      border-color: var(--sky);
+    }
+
+    .clinic-card {
+      background: white;
+      border-radius: var(--r-xl);
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+      box-shadow: var(--sh);
+      cursor: pointer;
+      transition: transform .2s;
+    }
+
+    .clinic-card:active {
+      transform: scale(.98);
+    }
+
+    .cc-ic {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      flex-shrink: 0;
+    }
+
+    .cc-name {
+      font-family: 'Baloo 2', cursive;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--mud);
+    }
+
+    .cc-dist {
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: 2px;
+    }
+
+    .cc-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .cc-tag {
+      padding: 3px 9px;
+      border-radius: var(--r-pill);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .cc-act {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: transform .2s;
+    }
+
+    .cc-act:active {
+      transform: scale(.9);
+    }
+
+    /* ─────────────────────────────────────────────
+   SCREEN 7 — MEDICINE
+───────────────────────────────────────────── */
+    #medicine {
+      background: var(--cream);
+    }
+
+    .med-hdr {
+      background: linear-gradient(135deg, var(--gold), var(--gold-d));
+      padding: 52px 20px 20px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .med-hdr::after {
+      content: '';
+      position: absolute;
+      right: -20px;
+      top: -20px;
+      width: 120px;
+      height: 120px;
+      background: rgba(255, 255, 255, .1);
+      border-radius: 50%;
+    }
+
+    .mode-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .mmode {
+      flex: 1;
+      background: rgba(255, 255, 255, .18);
+      border: 1.5px solid rgba(255, 255, 255, .28);
+      border-radius: 14px;
+      padding: 10px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all .25s;
+    }
+
+    .mmode.on {
+      background: white;
+      border-color: white;
+    }
+
+    .mm-ic {
+      font-size: 24px;
+    }
+
+    .mm-lb {
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, .85);
+    }
+
+    .mmode.on .mm-lb {
+      color: var(--mud);
+    }
+
+    .med-srow {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .med-field {
+      flex: 1;
+      background: white;
+      border: none;
+      border-radius: var(--r-pill);
+      padding: 12px 20px;
+      font-size: 14px;
+      font-family: 'Noto Sans', sans-serif;
+      color: var(--mud);
+      outline: none;
+    }
+
+    .med-sbtn {
+      width: 46px;
+      height: 46px;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, .2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      cursor: pointer;
+      border: 1.5px solid rgba(255, 255, 255, .3);
+    }
+
+    .med-sbtn:active {
+      background: rgba(255, 255, 255, .35);
+    }
+
+    .med-card {
+      background: white;
+      border-radius: var(--r-xl);
+      padding: 20px;
+      box-shadow: var(--sh);
+      margin-bottom: 14px;
+    }
+
+    .mc-name {
+      font-family: 'Baloo 2', cursive;
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--mud);
+    }
+
+    .mc-gen {
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: 2px;
+    }
+
+    .mc-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .mc-ri {
+      font-size: 22px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .mc-rl {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--sub);
+      margin-bottom: 3px;
+    }
+
+    .mc-rv {
+      font-size: 14px;
+      color: var(--mud);
+      line-height: 1.5;
+    }
+
+    .dos-strip {
+      background: linear-gradient(135deg, #E8F5EE, #D0EDD8);
+      border-radius: var(--r-lg);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 12px 0;
+    }
+
+    .ds-ic {
+      font-size: 28px;
+    }
+
+    .ds-t {
+      font-family: 'Baloo 2', cursive;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--leaf-d);
+    }
+
+    .ds-s {
+      font-size: 11px;
+      color: var(--sub);
+    }
+
+    .se-tog {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0 0;
+      border-top: 1px solid var(--border);
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    .se-lbl {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--sub);
+    }
+
+    .se-ic {
+      font-size: 20px;
+      transition: transform .3s;
+    }
+
+    .se-ic.open {
+      transform: rotate(180deg);
+    }
+
+    .se-content {
+      display: none;
+      padding: 12px 0 0;
+    }
+
+    .se-content.show {
+      display: block;
+    }
+
+    .se-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--sub);
+      margin-bottom: 6px;
+      line-height: 1.5;
+    }
+
+    .se-item::before {
+      content: '•';
+      color: var(--clay);
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    /* ─────────────────────────────────────────────
+   SCREEN 8 — PROFILE
+───────────────────────────────────────────── */
+    #profile {
+      background: var(--cream);
+    }
+
+    .prof-hdr {
+      background: linear-gradient(135deg, #5B4A8A, #3D2F6E);
+      padding: 52px 20px 24px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .ph-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255, 255, 255, .1);
+    }
+
+    .ph-r1 {
+      width: 220px;
+      height: 220px;
+      top: -80px;
+      left: -60px;
+    }
+
+    .ph-r2 {
+      width: 160px;
+      height: 160px;
+      bottom: -60px;
+      right: -40px;
+    }
+
+    .prof-av-big {
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 255, 255, .15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin: 0 auto 12px;
+      border: 3px solid rgba(255, 255, 255, .3);
+      position: relative;
+      z-index: 1;
+    }
+
+    .prof-name {
+      font-family: 'Baloo 2', cursive;
+      font-size: 24px;
+      font-weight: 800;
+      color: white;
+      position: relative;
+      z-index: 1;
+    }
+
+    .prof-id {
+      font-size: 12px;
+      color: rgba(255, 255, 255, .6);
+      margin-top: 4px;
+      position: relative;
+      z-index: 1;
+      letter-spacing: 1px;
+    }
+
+    .prof-stats {
+      display: flex;
+      margin-top: 16px;
+      gap: 1px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .ps {
+      flex: 1;
+      text-align: center;
+      background: rgba(255, 255, 255, .08);
+      padding: 10px 4px;
+    }
+
+    .ps:first-child {
+      border-radius: 12px 0 0 12px;
+    }
+
+    .ps:last-child {
+      border-radius: 0 12px 12px 0;
+    }
+
+    .ps-val {
+      font-family: 'Baloo 2', cursive;
+      font-size: 20px;
+      font-weight: 800;
+      color: white;
+    }
+
+    .ps-lbl {
+      font-size: 10px;
+      color: rgba(255, 255, 255, .55);
+      margin-top: 2px;
+    }
+
+    .prof-sec {
+      background: white;
+      border-radius: var(--r-xl);
+      margin-bottom: 14px;
+      overflow: hidden;
+      box-shadow: var(--sh);
+    }
+
+    .prof-sec-t {
+      font-size: 10px;
+      color: var(--sub);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 14px 16px 6px;
+      font-weight: 700;
+    }
+
+    .prof-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: background .2s;
+      border-top: 1px solid var(--border);
+    }
+
+    .prof-row:first-of-type {
+      border-top: none;
+    }
+
+    .prof-row:active {
+      background: var(--cream);
+    }
+
+    .pr-ic {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .pr-lbl {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--mud);
+      flex: 1;
+    }
+
+    .pr-val {
+      font-size: 12px;
+      color: var(--sub);
+    }
+
+    .pr-arr {
+      font-size: 16px;
+      color: var(--border);
+    }
+
+    /* ─────────────────────────────────────────────
+   SCREEN 9 — DOCTOR PORTAL
+───────────────────────────────────────────── */
+    #docportal {
+      background: #F4F1EE;
+    }
+
+    .dp-hdr {
+      background: linear-gradient(135deg, #3D2F6E, #5B4A8A);
+      padding: 52px 20px 20px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dp-hdr::after {
+      content: '';
+      position: absolute;
+      right: -20px;
+      bottom: -20px;
+      width: 140px;
+      height: 140px;
+      background: rgba(255, 255, 255, .07);
+      border-radius: 50%;
+    }
+
+    .dp-hdr::before {
+      content: '';
+      position: absolute;
+      left: -30px;
+      top: 20px;
+      width: 80px;
+      height: 80px;
+      background: rgba(245, 166, 35, .15);
+      border-radius: 50%;
+    }
+
+    .dp-role {
+      font-size: 11px;
+      color: rgba(255, 255, 255, .55);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dp-name {
+      font-family: 'Baloo 2', cursive;
+      font-size: 26px;
+      font-weight: 800;
+      color: white;
+      line-height: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dp-sub {
+      font-size: 12px;
+      color: rgba(255, 255, 255, .6);
+      margin-top: 4px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dp-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, .15);
+      border: 1px solid rgba(255, 255, 255, .22);
+      border-radius: var(--r-pill);
+      padding: 7px 16px;
+      margin-top: 16px;
+      position: relative;
+      z-index: 1;
+      cursor: pointer;
+    }
+
+    .dp-chip-dot {
+      width: 8px;
+      height: 8px;
+      background: #7FE5A8;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .dp-chip-txt {
+      font-size: 12px;
+      color: white;
+      font-weight: 600;
+    }
+
+    /* Portal tab bar (top tabs for doctor portal) */
+    .dp-tabs {
+      background: white;
+      display: flex;
+      border-bottom: 2px solid var(--border);
+      flex-shrink: 0;
+      overflow-x: auto;
+    }
+
+    .dp-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .dp-tab {
+      flex-shrink: 0;
+      padding: 14px 18px;
+      font-family: 'Baloo 2', cursive;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--sub);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+
+    .dp-tab.on {
+      color: var(--purple);
+      border-bottom-color: var(--purple);
+    }
+
+    /* Tab panels */
+    .dp-panel {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .dp-panel.show {
+      display: flex;
+    }
+
+    /* ── TAB 1: Priority Queue ── */
+    .pq-summary {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .pqs {
+      flex: 1;
+      background: white;
+      border-radius: var(--r-lg);
+      padding: 14px 12px;
+      box-shadow: var(--sh);
+      text-align: center;
+    }
+
+    .pqs-val {
+      font-family: 'Baloo 2', cursive;
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--mud);
+    }
+
+    .pqs-lbl {
+      font-size: 10px;
+      color: var(--sub);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+
+    .patient-card {
+      background: white;
+      border-radius: var(--r-xl);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--sh);
+      cursor: pointer;
+      transition: transform .2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .patient-card:active {
+      transform: scale(.98);
+    }
+
+    .pcard-priority {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      border-radius: 4px 0 0 4px;
+    }
+
+    .pc-num {
+      font-family: 'Baloo 2', cursive;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--border);
+      width: 28px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .pc-av {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #FFE8D6, #FFCFAD);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .pc-name {
+      font-family: 'Baloo 2', cursive;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--mud);
+    }
+
+    .pc-sym {
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: 2px;
+    }
+
+    .pc-age {
+      font-size: 11px;
+      color: var(--sub);
+      margin-top: 1px;
+    }
+
+    .pc-right {
+      margin-left: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .pc-badge {
+      padding: 4px 10px;
+      border-radius: var(--r-pill);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .pc-wait {
+      font-size: 11px;
+      color: var(--sub);
+    }
+
+    /* ── TAB 2: Stock Management ── */
+    .stock-alert-banner {
+      background: linear-gradient(135deg, var(--red-l), #FEF0EF);
+      border: 1.5px solid rgba(217, 79, 61, .2);
+      border-radius: var(--r-xl);
+      padding: 16px;
+      margin-bottom: 18px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .sab-icon {
+      font-size: 30px;
+      flex-shrink: 0;
+    }
+
+    .sab-title {
+      font-family: 'Baloo 2', cursive;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--red);
+      margin-bottom: 4px;
+    }
+
+    .sab-txt {
+      font-size: 12px;
+      color: var(--sub);
+      line-height: 1.5;
+    }
+
+    .sab-action {
+      margin-top: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--red);
+      color: white;
+      border-radius: var(--r-pill);
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'Baloo 2', cursive;
+      cursor: pointer;
+    }
+
+    .stock-card {
+      background: white;
+      border-radius: var(--r-xl);
+      padding: 16px;
+      margin-bottom: 10px;
+      box-shadow: var(--sh);
+    }
+
+    .sk-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .sk-name {
+      font-family: 'Baloo 2', cursive;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--mud);
+    }
+
+    .sk-cat {
+      font-size: 11px;
+      color: var(--sub);
+      margin-top: 2px;
+    }
+
+    .sk-badge {
+      padding: 4px 10px;
+      border-radius: var(--r-pill);
+      font-size: 10px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .sk-bar-track {
+      width: 100%;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+
+    .sk-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    .sk-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sk-stat {
+      font-size: 12px;
+      color: var(--sub);
+    }
+
+    .sk-stat strong {
+      color: var(--mud);
+    }
+
+    .sk-predict {
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .redistribute-card {
+      background: linear-gradient(135deg, var(--sky-l), #C0DDEF);
+      border-radius: var(--r-xl);
+      padding: 16px;
+      margin-bottom: 10px;
+      border: 1.5px solid rgba(74, 159, 212, .2);
+    }
+
+    .rc-title {
+      font-family: 'Baloo 2', cursive;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--sky);
+      margin-bottom: 8px;
+    }
+
+    .rc-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--mud);
+    }
+
+    .rc-arrow {
+      font-size: 18px;
+      color: var(--sky);
+    }
+
+    .rc-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--sky);
+      color: white;
+      border-radius: var(--r-pill);
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'Baloo 2', cursive;
+      cursor: pointer;
+    }
+
+    /* ── TAB 3: ASHA Routes ── */
+    .route-hdr-card {
+      background: linear-gradient(135deg, var(--leaf-l), #D0EDD8);
+      border-radius: var(--r-xl);
+      padding: 16px;
+      margin-bottom: 18px;
+      border: 1.5px solid rgba(61, 170, 110, .2);
+    }
+
+    .rh-title {
+      font-family: 'Baloo 2', cursive;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--leaf-d);
+      margin-bottom: 4px;
+    }
+
+    .rh-stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+    }
+
+    .rh-stat {
+      text-align: center;
+    }
+
+    .rh-sv {
+      font-family: 'Baloo 2', cursive;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--leaf-d);
+    }
+
+    .rh-sl {
+      font-size: 10px;
+      color: var(--sub);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Route map placeholder */
+    .route-map {
+      height: 160px;
+      background: linear-gradient(160deg, #D4EAF7, #B0D0E8);
+      border-radius: var(--r-xl);
+      margin-bottom: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .rm-grid {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, .2)1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .2)1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    .rm-path {
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      top: 50%;
+      height: 3px;
+      background: var(--leaf);
+      border-radius: 2px;
+    }
+
+    .rm-pin {
+      position: absolute;
+      font-size: 20px;
+    }
+
+    .rm-p1 {
+      top: 30%;
+      left: 10%;
+    }
+
+    .rm-p2 {
+      top: 55%;
+      left: 30%;
+    }
+
+    .rm-p3 {
+      top: 25%;
+      left: 52%;
+    }
+
+    .rm-p4 {
+      top: 60%;
+      left: 72%;
+    }
+
+    .rm-p5 {
+      top: 35%;
+      left: 88%;
+    }
+
+    .visit-card {
+      background: white;
+      border-radius: var(--r-xl);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--sh);
+    }
+
+    .vc-step {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Baloo 2', cursive;
+      font-size: 14px;
+      font-weight: 800;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .vc-name {
+      font-family: 'Baloo 2', cursive;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--mud);
+    }
+
+    .vc-det {
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: 2px;
+    }
+
+    .vc-right {
+      margin-left: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .vc-dist {
+      font-size: 12px;
+      color: var(--sub);
+    }
+
+    .vc-done-btn {
+      padding: 5px 12px;
+      border-radius: var(--r-pill);
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'Baloo 2', cursive;
+      cursor: pointer;
+    }
+
+    /* Doctor portal bottom nav */
+    .dp-bnav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      display: flex;
+      padding: 10px 0 28px;
+      z-index: 100;
+      box-shadow: 0 -6px 24px rgba(46, 27, 14, .07);
+    }
+
+    .dp-bni {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 2px 0;
+    }
+
+    .dp-bni-ic {
+      width: 50px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      font-size: 22px;
+      transition: all .25s cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    .dp-bni.on .dp-bni-ic {
+      background: var(--purple-l);
+      transform: scale(1.12);
+    }
+
+    .dp-bni-lb {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--sub);
+    }
+
+    .dp-bni.on .dp-bni-lb {
+      color: var(--purple);
+    }
+
+    /* ─────────────────────────────────────────────
+   SOS MODAL
+───────────────────────────────────────────── */
+    .sos-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(46, 27, 14, .75);
+      display: none;
+      align-items: flex-end;
+      z-index: 500;
+      backdrop-filter: blur(4px);
+    }
+
+    .sos-modal.show {
+      display: flex;
+    }
+
+    .sos-sheet {
+      background: white;
+      border-radius: 30px 30px 0 0;
+      padding: 24px 20px 50px;
+      width: 100%;
+    }
+
+    .sos-handle {
+      width: 40px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+
+    .sos-title {
+      font-family: 'Baloo 2', cursive;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--red);
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .sos-sub {
+      font-size: 13px;
+      color: var(--sub);
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .sos-opt {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 16px;
+      border-radius: var(--r-xl);
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .sos-opt:active {
+      transform: scale(.98);
+    }
+
+    .sos-opt.c {
+      background: var(--red-l);
+      border: 2px solid rgba(217, 79, 61, .2);
+    }
+
+    .sos-opt.l {
+      background: var(--sky-l);
+      border: 2px solid rgba(74, 159, 212, .2);
+    }
+
+    .sos-opt.h {
+      background: var(--leaf-l);
+      border: 2px solid rgba(61, 170, 110, .2);
+    }
+
+    .so-ic {
+      font-size: 32px;
+      flex-shrink: 0;
+    }
+
+    .so-lbl {
+      font-family: 'Baloo 2', cursive;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .so-sub {
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: 2px;
+    }
+
+    .so-arr {
+      margin-left: auto;
+      font-size: 22px;
+    }
+
+    .sos-dis {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 14px;
+      color: var(--sub);
+      cursor: pointer;
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV PANEL -->
+  <div class="nav-panel">
+    <h3>Screens</h3>
+    <div class="np-section">Patient App</div>
+    <div class="nav-btn cur" id="nb-splash" onclick="go('splash')"> <span>🌿</span>Splash</div>
+    <div class="nav-btn" id="nb-onboard" onclick="go('onboard')"> <span>👋</span>Onboarding</div>
+    <div class="nav-btn" id="nb-home" onclick="go('home')"> <span>🏠</span>Home</div>
+    <div class="nav-btn" id="nb-symptom" onclick="go('symptom')"> <span>🤒</span>Symptoms</div>
+    <div class="nav-btn" id="nb-doctor" onclick="go('doctor')"> <span>📹</span>Consult</div>
+    <div class="nav-btn" id="nb-nearby" onclick="go('nearby')"> <span>📍</span>Nearby</div>
+    <div class="nav-btn" id="nb-medicine" onclick="go('medicine')"><span>💊</span>Medicine</div>
+    <div class="nav-btn" id="nb-profile" onclick="go('profile')"> <span>👤</span>Profile</div>
+    <div class="np-section">Doctor Portal</div>
+    <div class="nav-btn" id="nb-docportal" onclick="go('docportal')"><span>🏥</span>Dr. Dashboard</div>
+  </div>
+
+  <!-- DEVICE -->
+  <div class="device">
+    <div class="dyn-island"></div>
+
+    <!-- ══ SPLASH ══ -->
+    <div class="screen active" id="splash" onclick="go('onboard')">
+      <div class="m-ring m1"></div>
+      <div class="m-ring m2"></div>
+      <div class="m-ring m3"></div>
+      <div class="splash-logo">🌿</div>
+      <div class="splash-title">AarogyaPath</div>
+      <div class="splash-sub">आपकी सेहत, हमारी राह</div>
+      <div class="splash-tag">HealthTech for Bharat</div>
+      <div class="lang-dots">
+        <div class="ldot sel">हि</div>
+        <div class="ldot">த</div>
+        <div class="ldot">తె</div>
+        <div class="ldot">বা</div>
+        <div class="ldot">ਪੰ</div>
+      </div>
+      <div class="splash-hint">Tap to begin →</div>
+    </div>
+
+    <!-- ══ ONBOARDING ══ -->
+    <div class="screen" id="onboard">
+      <div class="ob-hdr">
+        <div style="font-size:12px;color:var(--sub);font-weight:700;" id="ob-step-lbl">1 of 3</div>
+        <div class="ob-prog">
+          <div class="ob-prog-fill" id="ob-fill" style="width:33%"></div>
+        </div>
+        <div style="font-size:13px;color:var(--clay);font-weight:700;cursor:pointer;" onclick="go('home')">Skip</div>
+      </div>
+      <div class="ob-slide active" id="ob1">
+        <div class="ob-hero" style="background:linear-gradient(160deg,#E8F5EE,#D0EDD8);">🏥</div>
+        <div class="ob-step">Doctor in your pocket</div>
+        <div class="ob-desc">AI health guidance and real doctor consultations — no matter how far you live from a
+          clinic.</div>
+        <div class="ob-dots">
+          <div class="ob-dot on"></div>
+          <div class="ob-dot"></div>
+          <div class="ob-dot"></div>
+        </div>
+        <div class="ob-btn" onclick="nextSlide()">Next →</div>
+        <div class="ob-skip" onclick="go('home')">Skip intro</div>
+      </div>
+      <div class="ob-slide" id="ob2">
+        <div class="ob-hero" style="background:linear-gradient(160deg,#FFE8D6,#FFCFAD);">🎤</div>
+        <div class="ob-step">Speak, don't type</div>
+        <div class="ob-desc">Use your voice in Hindi, Tamil, Telugu or any of 12 Indian languages. No reading required.
+        </div>
+        <div class="ob-dots">
+          <div class="ob-dot"></div>
+          <div class="ob-dot on"></div>
+          <div class="ob-dot"></div>
+        </div>
+        <div class="ob-btn" onclick="nextSlide()">Next →</div>
+        <div class="ob-skip" onclick="go('home')">Skip intro</div>
+      </div>
+      <div class="ob-slide" id="ob3">
+        <div class="ob-hero" style="background:linear-gradient(160deg,#FFF5E4,#FFE8C4);">📡</div>
+        <div class="ob-step">Works without internet</div>
+        <div class="ob-desc">2G or no signal? Core features work offline and sync automatically when you reconnect.
+        </div>
+        <div class="ob-dots">
+          <div class="ob-dot"></div>
+          <div class="ob-dot"></div>
+          <div class="ob-dot on"></div>
+        </div>
+        <div class="ob-btn" onclick="nextSlide()">Get Started 🌿</div>
+      </div>
+    </div>
+
+    <!-- ══ HOME ══ -->
+    <div class="screen" id="home">
+      <div class="hm-hdr">
+        <div class="sbar" style="background:transparent;height:auto;padding:0;margin-bottom:14px;">
+          <span class="sbar-t" style="color:rgba(255,255,255,.75);font-size:14px;">9:41</span>
+          <span class="sbar-r" style="color:rgba(255,255,255,.75)">📶 🔋</span>
+        </div>
+        <div class="hm-ring1"></div>
+        <div class="hm-ring2"></div>
+        <div class="hm-row">
+          <div style="position:relative;z-index:1">
+            <div class="hm-namaste">नमस्ते</div>
+            <div class="hm-name">Ramesh Ji 👋</div>
+            <div class="hm-loc">📍 Udaipur, Rajasthan</div>
+          </div>
+          <div class="hm-avatar" onclick="go('profile')">👨‍🌾</div>
+        </div>
+        <div class="health-chip">
+          <div class="hc-dot"></div>
+          <span class="hc-txt">Health: Good • Last check 2d ago</span>
+        </div>
+      </div>
+      <div class="offline-bar">
+        <div class="offline-dot"></div>
+        <div class="offline-txt">Offline mode — will sync when connected</div>
+      </div>
+      <div class="scroll">
+        <div class="slabel" style="margin-top:6px;">What do you need?</div>
+        <div class="agrid">
+          <div class="acard ac-s1" onclick="go('symptom')">
+            <div class="ac-icon">🤒</div>
+            <div>
+              <div class="ac-label">Check Symptoms</div>
+              <div class="ac-sub">AI-guided triage</div>
+            </div>
+          </div>
+          <div class="acard ac-s2" onclick="go('doctor')">
+            <div class="ac-icon">👨‍⚕️</div>
+            <div>
+              <div class="ac-label">Talk to Doctor</div>
+              <div class="ac-sub">Video or chat</div>
+            </div>
+          </div>
+          <div class="acard ac-s3" onclick="go('medicine')">
+            <div class="ac-icon">💊</div>
+            <div>
+              <div class="ac-label">Medicine Info</div>
+              <div class="ac-sub">Scan or search</div>
+            </div>
+          </div>
+          <div class="acard ac-s4" onclick="go('nearby')">
+            <div class="ac-icon">📍</div>
+            <div>
+              <div class="ac-label">Near Me</div>
+              <div class="ac-sub">Clinics & PHCs</div>
+            </div>
+          </div>
+        </div>
+        <div class="slabel">Upcoming Appointment</div>
+        <div class="appt-card" onclick="go('doctor')">
+          <div class="ap-av">👩‍⚕️</div>
+          <div style="flex:1">
+            <div class="ap-doc">Dr. Priya Mehta</div>
+            <div class="ap-time">🕑 Today 2:30 PM • Video Call</div>
+          </div>
+          <div class="ap-badge">Soon</div>
+        </div>
+        <div class="slabel">Vitals (last recorded)</div>
+        <div class="vrow">
+          <div class="vcard">
+            <div class="vc-val">98.4</div>
+            <div class="vc-unit">°F</div>
+            <div class="vc-label">Temperature</div>
+            <div class="vc-bar" style="background:linear-gradient(90deg,var(--leaf),var(--gold))"></div>
+          </div>
+          <div class="vcard">
+            <div class="vc-val">118</div>
+            <div class="vc-unit">/76 mmHg</div>
+            <div class="vc-label">Blood Pressure</div>
+            <div class="vc-bar" style="background:var(--leaf-l);border:1px solid var(--leaf)"></div>
+          </div>
+          <div class="vcard">
+            <div class="vc-val">97</div>
+            <div class="vc-unit">% SpO₂</div>
+            <div class="vc-label">Oxygen</div>
+            <div class="vc-bar" style="background:linear-gradient(90deg,var(--sky),var(--leaf))"></div>
+          </div>
+        </div>
+        <div class="slabel">Language</div>
+        <div class="lstrip">
+          <div class="lpill on">हिंदी</div>
+          <div class="lpill off">தமிழ்</div>
+          <div class="lpill off">తెలుగు</div>
+          <div class="lpill off">বাংলা</div>
+          <div class="lpill off">ਪੰਜਾਬੀ</div>
+          <div class="lpill off">मराठी</div>
+        </div>
+        <div class="tip-card">
+          <div class="tip-icon">☀️</div>
+          <div>
+            <div class="tip-title">Today's Health Tip</div>
+            <div class="tip-txt">Summer heat in Rajasthan increases dehydration risk. Drink 8+ glasses of water and
+              avoid going out between 12–4 PM.</div>
+          </div>
+        </div>
+      </div>
+      <div class="vfab" onclick="go('symptom')">🎤</div>
+      <div class="sos-fab" onclick="showSos()">SOS</div>
+      <div class="bnav">
+        <div class="bni on">
+          <div class="bni-ic">🏠</div>
+          <div class="bni-lb">Home</div>
+        </div>
+        <div class="bni" onclick="go('symptom')">
+          <div class="bni-ic">🤒</div>
+          <div class="bni-lb">Symptoms</div>
+        </div>
+        <div class="bni-gap"></div>
+        <div class="bni" onclick="go('nearby')">
+          <div class="bni-ic">📍</div>
+          <div class="bni-lb">Nearby</div>
+        </div>
+        <div class="bni" onclick="go('profile')">
+          <div class="bni-ic">👤</div>
+          <div class="bni-lb">Profile</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SYMPTOM CHECKER ══ -->
+    <div class="screen" id="symptom">
+      <div class="sym-hdr">
+        <div class="back-row">
+          <div class="back-btn" onclick="go('home')">←</div>
+          <div class="sh-title">Symptom Check</div>
+        </div>
+        <div class="sh-sub">Your AI health assistant is listening</div>
+        <div class="triage-pills">
+          <div class="tpill">
+            <div class="tpill-dot" style="background:#7FE5A8"></div>Safe
+          </div>
+          <div class="tpill">
+            <div class="tpill-dot" style="background:var(--gold)"></div>Monitor
+          </div>
+          <div class="tpill">
+            <div class="tpill-dot" style="background:var(--red)"></div>Urgent
+          </div>
+        </div>
+      </div>
+      <div class="chat-scroll" id="chatScroll">
+        <div class="brow">
+          <div class="bav ai">🤖</div>
+          <div class="bwrap">
+            <div class="bubble ai">नमस्ते Ramesh Ji! आज आप कैसा महसूस कर रहे हैं?<br><br><em
+                style="font-size:12px;color:#aaa">Hello! How are you feeling today?</em></div>
+            <div class="listen-btn">🔊 सुनें</div>
+            <div class="btime">9:41 AM</div>
+          </div>
+        </div>
+        <div class="brow user">
+          <div class="bav user">👨‍🌾</div>
+          <div class="bwrap">
+            <div class="bubble user">सिरदर्द है और बुखार लग रहा है, कल शाम से।</div>
+            <div class="btime user">9:42 AM • 🎤 Voice</div>
+          </div>
+        </div>
+        <div class="brow">
+          <div class="bav ai">🤖</div>
+          <div class="bwrap">
+            <div class="bubble ai">समझ गया। क्या ठंड भी लग रही है? बुखार कितना है?<br><br><em
+                style="font-size:12px;color:#aaa">Any chills? What's the temperature?</em></div>
+            <div class="listen-btn">🔊 सुनें</div>
+            <div class="btime">9:42 AM</div>
+          </div>
+        </div>
+        <div class="brow user">
+          <div class="bav user">👨‍🌾</div>
+          <div class="bwrap">
+            <div class="bubble user">हाँ थोड़ी ठंड है। माथा गर्म है पर नापा नहीं।</div>
+            <div class="btime user">9:44 AM • 🎤 Voice</div>
+          </div>
+        </div>
+        <div class="triage-card">
+          <div class="tc-label">🩺 AI Assessment</div>
+          <div class="tc-row">
+            <div class="tc-dot" style="background:var(--gold)"></div>
+            <div class="tc-title">Monitor at Home</div>
+          </div>
+          <div class="tc-sub">Likely viral fever. Rest well, drink fluids, take Paracetamol 500mg. See a doctor if
+            temperature stays above 102°F for 2+ days.</div>
+          <div class="tc-btns">
+            <div class="tc-btn" style="background:var(--leaf-l);color:var(--leaf-d);" onclick="go('medicine')">💊
+              Medicine Info</div>
+            <div class="tc-btn" style="background:var(--clay-l);color:var(--clay-d);" onclick="go('doctor')">📞 Call
+              Doctor</div>
+          </div>
+        </div>
+      </div>
+      <div class="quick-row">
+        <div class="qpick" onclick="sendQuick('हाँ body pain भी है 🤕')">Body pain</div>
+        <div class="qpick" onclick="sendQuick('सिर्फ सिरदर्द है')">Only headache</div>
+        <div class="qpick" onclick="sendQuick('खाना नहीं खाया')">Not eating</div>
+        <div class="qpick" onclick="sendQuick('थोड़ा बेहतर हूँ')">Getting better</div>
+      </div>
+      <div class="chat-bar">
+        <input class="chat-field" id="chatInput" placeholder="Type or use voice…"
+          onkeydown="if(event.key==='Enter')sendMsg()">
+        <div class="chat-mic" onclick="sendMsg()">🎤</div>
+      </div>
+    </div>
+
+    <!-- ══ DOCTOR / CONSULTATION ══ -->
+    <div class="screen" id="doctor">
+      <div class="doc-hdr">
+        <div class="back-row">
+          <div class="back-btn" onclick="go('home')">←</div>
+          <div class="sh-title">Consultations</div>
+        </div>
+        <div class="sh-sub" style="color:rgba(255,255,255,.68)">Your queue & available doctors</div>
+      </div>
+      <div class="scroll">
+        <div class="slabel" style="margin-top:6px;">Your Queue Position</div>
+        <div class="q-banner">
+          <div class="qb-row">
+            <div>
+              <div class="qb-num">#3</div>
+              <div class="qb-lbl">Your Position</div>
+            </div>
+            <div>
+              <div class="qb-est">~18 min</div>
+              <div class="qb-el">Estimated wait</div>
+            </div>
+          </div>
+          <div class="qbar">
+            <div class="qbar-fill"></div>
+          </div>
+          <div class="qbar-sub">2 patients ahead of you</div>
+        </div>
+        <div class="slabel">Your Appointment</div>
+        <div class="doc-card">
+          <div class="dc-top">
+            <div class="dc-av">👩‍⚕️</div>
+            <div>
+              <div class="dc-name">Dr. Priya Mehta</div>
+              <div class="dc-spec">MBBS, General Physician • 8 yrs exp.</div>
+              <div class="dc-rat"><span class="dc-stars">★★★★★</span><span class="dc-rn">4.9 (1.2k)</span></div>
+            </div>
+          </div>
+          <div class="dc-langs">
+            <div class="dc-lang">हिंदी</div>
+            <div class="dc-lang">English</div>
+            <div class="dc-lang">Rajasthani</div>
+          </div>
+          <div class="dc-actions">
+            <div class="dc-btn s">💬 Chat</div>
+            <div class="dc-btn p" onclick="startCall()">📹 Join Call</div>
+          </div>
+        </div>
+        <div class="slabel">Available Now</div>
+        <div class="doc-card">
+          <div class="dc-top">
+            <div class="dc-av">👨‍⚕️</div>
+            <div>
+              <div class="dc-name">Dr. Ramesh Patel</div>
+              <div class="dc-spec">AYUSH Practitioner • 12 yrs</div>
+              <div class="dc-rat"><span class="dc-stars">★★★★☆</span><span class="dc-rn">4.7 (830)</span></div>
+            </div>
+          </div>
+          <div class="dc-langs">
+            <div class="dc-lang">हिंदी</div>
+            <div class="dc-lang">Gujarati</div>
+          </div>
+          <div class="dc-actions">
+            <div class="dc-btn s">💬 Chat</div>
+            <div class="dc-btn p">📅 Book</div>
+          </div>
+        </div>
+        <div class="doc-card">
+          <div class="dc-top">
+            <div class="dc-av">👩‍⚕️</div>
+            <div>
+              <div class="dc-name">Dr. Kavitha Nair</div>
+              <div class="dc-spec">Pediatrics • 5 yrs exp.</div>
+              <div class="dc-rat"><span class="dc-stars">★★★★★</span><span class="dc-rn">4.8 (620)</span></div>
+            </div>
+          </div>
+          <div class="dc-langs">
+            <div class="dc-lang">Malayalam</div>
+            <div class="dc-lang">Tamil</div>
+          </div>
+          <div class="dc-actions">
+            <div class="dc-btn s">💬 Chat</div>
+            <div class="dc-btn p">📅 Book</div>
+          </div>
+        </div>
+      </div>
+      <!-- Video Call Overlay -->
+      <div class="vcall-ov" id="vcall">
+        <div class="vc-remote">
+          <div class="vc-face">👩‍⚕️</div>
+          <div class="vc-dname">Dr. Priya Mehta</div>
+          <div class="vc-status">Connected • Secure Call</div>
+        </div>
+        <div class="vc-local">👨‍🌾</div>
+        <div class="vc-timer" id="vcTimer">00:00</div>
+        <div class="vc-controls">
+          <div class="vc-btn on">🔇</div>
+          <div class="vc-btn on">📷</div>
+          <div class="vc-btn on">🔊</div>
+          <div class="vc-btn end" onclick="endCall()">📵</div>
+        </div>
+      </div>
+      <div class="bnav">
+        <div class="bni" onclick="go('home')">
+          <div class="bni-ic">🏠</div>
+          <div class="bni-lb">Home</div>
+        </div>
+        <div class="bni" onclick="go('symptom')">
+          <div class="bni-ic">🤒</div>
+          <div class="bni-lb">Symptoms</div>
+        </div>
+        <div class="bni-gap"></div>
+        <div class="bni" onclick="go('nearby')">
+          <div class="bni-ic">📍</div>
+          <div class="bni-lb">Nearby</div>
+        </div>
+        <div class="bni" onclick="go('profile')">
+          <div class="bni-ic">👤</div>
+          <div class="bni-lb">Profile</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ NEARBY ══ -->
+    <div class="screen" id="nearby">
+      <div class="map-zone">
+        <div class="mz-grid"></div>
+        <div class="mz-road1"></div>
+        <div class="mz-road2"></div>
+        <div class="mp mp1">🏥</div>
+        <div class="mp mp2">💊</div>
+        <div class="mp mp3">🩺</div>
+        <div class="mp mp4">🏥</div>
+        <div class="map-you"></div>
+      </div>
+      <div class="map-topbar">
+        <div class="mtb-back" onclick="go('home')">←</div>
+        <div class="mtb-title">📍 Nearby Care</div>
+        <div style="width:40px"></div>
+      </div>
+      <div class="fstrip">
+        <div class="fpill on">All</div>
+        <div class="fpill">Hospital</div>
+        <div class="fpill">PHC (Free)</div>
+        <div class="fpill">Pharmacy</div>
+        <div class="fpill">Lab</div>
+      </div>
+      <div class="scroll" style="padding-top:0;">
+        <div class="slabel">4 places found</div>
+        <div class="clinic-card">
+          <div class="cc-ic" style="background:linear-gradient(135deg,#E8F5EE,#C8EAD6)">🏥</div>
+          <div style="flex:1">
+            <div class="cc-name">Rajasthan PHC No. 4</div>
+            <div class="cc-dist">📍 2.4 km • Open Now</div>
+            <div class="cc-tags"><span class="cc-tag"
+                style="background:var(--leaf-l);color:var(--leaf-d)">Free</span><span class="cc-tag"
+                style="background:var(--gold-l);color:var(--gold-d)">Hindi</span><span class="cc-tag"
+                style="background:var(--sky-l);color:var(--sky)">Ayushman</span></div>
+          </div>
+          <div class="cc-act" style="background:var(--leaf-l)">🗺️</div>
+        </div>
+        <div class="clinic-card">
+          <div class="cc-ic" style="background:linear-gradient(135deg,#FFE8D6,#FFCFAD)">💊</div>
+          <div style="flex:1">
+            <div class="cc-name">Sharma Medical Store</div>
+            <div class="cc-dist">📍 0.8 km • Open 24h</div>
+            <div class="cc-tags"><span class="cc-tag"
+                style="background:var(--clay-l);color:var(--clay-d)">Pharmacy</span><span class="cc-tag"
+                style="background:var(--gold-l);color:var(--gold-d)">Hindi</span></div>
+          </div>
+          <div class="cc-act" style="background:var(--clay-l)">📞</div>
+        </div>
+        <div class="clinic-card">
+          <div class="cc-ic" style="background:linear-gradient(135deg,#E8F0FF,#C8D5F5)">🩺</div>
+          <div style="flex:1">
+            <div class="cc-name">Dr. Sunita Verma Clinic</div>
+            <div class="cc-dist">📍 4.1 km • Opens 9 AM</div>
+            <div class="cc-tags"><span class="cc-tag" style="background:#E8F0FF;color:#3050C8">MBBS</span><span
+                class="cc-tag" style="background:var(--gold-l);color:var(--gold-d)">Hindi</span></div>
+          </div>
+          <div class="cc-act" style="background:#E8F0FF">📅</div>
+        </div>
+        <div class="clinic-card">
+          <div class="cc-ic" style="background:linear-gradient(135deg,var(--gold-l),#FFE8C4)">🔬</div>
+          <div style="flex:1">
+            <div class="cc-name">Mewar Diagnostics</div>
+            <div class="cc-dist">📍 3.2 km • 7AM–8PM</div>
+            <div class="cc-tags"><span class="cc-tag" style="background:var(--gold-l);color:var(--gold-d)">Blood
+                Test</span><span class="cc-tag" style="background:var(--gold-l);color:var(--gold-d)">X-Ray</span></div>
+          </div>
+          <div class="cc-act" style="background:var(--gold-l)">📋</div>
+        </div>
+      </div>
+      <div class="sos-fab" onclick="showSos()">SOS</div>
+      <div class="bnav">
+        <div class="bni" onclick="go('home')">
+          <div class="bni-ic">🏠</div>
+          <div class="bni-lb">Home</div>
+        </div>
+        <div class="bni" onclick="go('symptom')">
+          <div class="bni-ic">🤒</div>
+          <div class="bni-lb">Symptoms</div>
+        </div>
+        <div class="bni-gap"></div>
+        <div class="bni on">
+          <div class="bni-ic">📍</div>
+          <div class="bni-lb">Nearby</div>
+        </div>
+        <div class="bni" onclick="go('profile')">
+          <div class="bni-ic">👤</div>
+          <div class="bni-lb">Profile</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MEDICINE ══ -->
+    <div class="screen" id="medicine">
+      <div class="med-hdr">
+        <div class="back-row">
+          <div class="back-btn" onclick="go('home')">←</div>
+          <div class="sh-title">Medicine Info</div>
+        </div>
+        <div class="sh-sub" style="color:rgba(255,255,255,.68)">Scan, speak, or type any medicine</div>
+        <div class="mode-row">
+          <div class="mmode on" id="m1" onclick="selMode(1)">
+            <div class="mm-ic">📷</div>
+            <div class="mm-lb" style="color:var(--mud)">Photo</div>
+          </div>
+          <div class="mmode" id="m2" onclick="selMode(2)">
+            <div class="mm-ic">🎤</div>
+            <div class="mm-lb">Voice</div>
+          </div>
+          <div class="mmode" id="m3" onclick="selMode(3)">
+            <div class="mm-ic">⌨️</div>
+            <div class="mm-lb">Type</div>
+          </div>
+        </div>
+        <div class="med-srow">
+          <input class="med-field" id="medField" placeholder="Search medicine name…" value="Paracetamol">
+          <div class="med-sbtn">🔍</div>
+        </div>
+      </div>
+      <div class="scroll">
+        <div class="med-card">
+          <div class="mc-name">Paracetamol</div>
+          <div class="mc-gen">Acetaminophen 500mg Tablet • Schedule H</div>
+          <div class="div"></div>
+          <div class="mc-row">
+            <div class="mc-ri">🎯</div>
+            <div>
+              <div class="mc-rl">Used For</div>
+              <div class="mc-rv">Fever, headache, body pain, toothache, mild pain relief</div>
+            </div>
+          </div>
+          <div class="dos-strip">
+            <div class="ds-ic">💊</div>
+            <div>
+              <div class="ds-t">1 tablet every 6–8 hours</div>
+              <div class="ds-s">After food • Max 4 tablets per day</div>
+            </div>
+          </div>
+          <div class="mc-row">
+            <div class="mc-ri">⚠️</div>
+            <div>
+              <div class="mc-rl">Warning</div>
+              <div class="mc-rv">Do not take with alcohol. Avoid with liver or kidney problems. Tell your doctor if
+                pregnant.</div>
+            </div>
+          </div>
+          <div class="mc-row">
+            <div class="mc-ri">💰</div>
+            <div>
+              <div class="mc-rl">Price & Availability</div>
+              <div class="mc-rv">₹12–₹25 for 10 tablets. Free at govt. PHCs (Jan Aushadhi).</div>
+            </div>
+          </div>
+          <div class="se-tog" onclick="toggleSe()"><span class="se-lbl">Side Effects (tap to see)</span><span
+              class="se-ic" id="seIc">›</span></div>
+          <div class="se-content" id="seCont">
+            <div class="se-item">Nausea or stomach upset — take with food to reduce</div>
+            <div class="se-item">Rare: skin rash — stop and see doctor if this occurs</div>
+            <div class="se-item">Very rare: liver damage if overdosed — never exceed dose</div>
+          </div>
+        </div>
+        <div class="tip-card">
+          <div class="tip-icon">💡</div>
+          <div>
+            <div class="tip-title">Did you know?</div>
+            <div class="tip-txt">Paracetamol is available free at all government PHCs under PM Jan Aushadhi scheme. Show
+              your Ayushman card.</div>
+          </div>
+        </div>
+        <div class="med-card" style="background:var(--red-l);border:1.5px solid rgba(217,79,61,.2);">
+          <div style="display:flex;gap:10px;align-items:center;">
+            <div style="font-size:28px">🚫</div>
+            <div>
+              <div style="font-family:'Baloo 2',cursive;font-weight:700;font-size:14px;color:var(--red)">Do NOT combine
+                with</div>
+              <div style="font-size:13px;color:var(--sub);margin-top:4px;line-height:1.5;">Warfarin, alcohol, or other
+                paracetamol-containing medicines. Avoid with Rifampicin (TB medicine).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bnav">
+        <div class="bni" onclick="go('home')">
+          <div class="bni-ic">🏠</div>
+          <div class="bni-lb">Home</div>
+        </div>
+        <div class="bni" onclick="go('symptom')">
+          <div class="bni-ic">🤒</div>
+          <div class="bni-lb">Symptoms</div>
+        </div>
+        <div class="bni-gap"></div>
+        <div class="bni" onclick="go('nearby')">
+          <div class="bni-ic">📍</div>
+          <div class="bni-lb">Nearby</div>
+        </div>
+        <div class="bni" onclick="go('profile')">
+          <div class="bni-ic">👤</div>
+          <div class="bni-lb">Profile</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PROFILE ══ -->
+    <div class="screen" id="profile">
+      <div class="prof-hdr">
+        <div class="ph-ring ph-r1"></div>
+        <div class="ph-ring ph-r2"></div>
+        <div class="prof-av-big">👨‍🌾</div>
+        <div class="prof-name">Ramesh Kumar</div>
+        <div class="prof-id">ABHA ID: 23-4567-8910-1112</div>
+        <div class="prof-stats">
+          <div class="ps">
+            <div class="ps-val">12</div>
+            <div class="ps-lbl">Consults</div>
+          </div>
+          <div class="ps">
+            <div class="ps-val">4</div>
+            <div class="ps-lbl">Rx</div>
+          </div>
+          <div class="ps">
+            <div class="ps-val">3</div>
+            <div class="ps-lbl">Doctors</div>
+          </div>
+          <div class="ps">
+            <div class="ps-val">60km</div>
+            <div class="ps-lbl">Saved</div>
+          </div>
+        </div>
+      </div>
+      <div class="scroll">
+        <div class="prof-sec">
+          <div class="prof-sec-t">Personal Health</div>
+          <div class="prof-row">
+            <div class="pr-ic" style="background:#E8F5EE">💉</div>
+            <div class="pr-lbl">Medical History</div><span class="pr-arr">›</span>
+          </div>
+          <div class="prof-row">
+            <div class="pr-ic" style="background:#FFE8D6">💊</div>
+            <div class="pr-lbl">Current Medicines</div><span class="pr-arr">›</span>
+          </div>
+          <div class="prof-row">
+            <div class="pr-ic" style="background:#FFF5E4">📋</div>
+            <div class="pr-lbl">Past Prescriptions</div><span class="pr-arr">›</span>
+          </div>
+          <div class="prof-row">
+            <div class="pr-ic" style="background:#E8F0FF">📊</div>
+            <div class="pr-lbl">Vitals History</div><span class="pr-arr">›</span>
+          </div>
+        </div>
+        <div class="prof-sec">
+          <div class="prof-sec-t">Insurance & Schemes</div>
+          <div class="prof-row">
+            <div class="pr-ic" style="background:#E8F5EE">🏛️</div>
+            <div class="pr-lbl">Ayushman Bharat Card</div>
+            <div class="pr-val" style="color:var(--leaf-d);font-weight:700">Active</div><span class="pr-arr"
+              style="margin-left:6px">›</span>
+          </div>
+          <div class="prof-row">
+            <div class="pr-ic" style="background:#FFF5E4">🪙</div>
+            <div class="pr-lbl">Jan Aushadhi</div><span class="pr-arr">›</span>
+          </div>
+        </div>
+        <div class="prof-sec">
+          <div class="prof-sec-t">App Settings</div>
+          <div class="prof-row">
+            <div class="pr-ic" style="background:var(--gold-l)">🌐</div>
+            <div class="pr-lbl">Language</div>
+            <div class="pr-val">हिंदी</div><span class="pr-arr" style="margin-left:6px">›</span>
+          </div>
+          <div class="prof-row">
+            <div class="pr-ic" style="background:#E8F0FF">🔔</div>
+            <div class="pr-lbl">Notifications</div><span class="pr-arr">›</span>
+          </div>
+          <div class="prof-row">
+            <div class="pr-ic" style="background:var(--red-l)">🚪</div>
+            <div class="pr-lbl" style="color:var(--red)">Sign Out</div><span class="pr-arr">›</span>
+          </div>
+        </div>
+        <div style="text-align:center;font-size:11px;color:var(--border);margin-top:8px;padding-bottom:20px;">
+          AarogyaPath v1.0.0 • Powered by Web Speech API + Gemini</div>
+      </div>
+      <div class="bnav">
+        <div class="bni" onclick="go('home')">
+          <div class="bni-ic">🏠</div>
+          <div class="bni-lb">Home</div>
+        </div>
+        <div class="bni" onclick="go('symptom')">
+          <div class="bni-ic">🤒</div>
+          <div class="bni-lb">Symptoms</div>
+        </div>
+        <div class="bni-gap"></div>
+        <div class="bni" onclick="go('nearby')">
+          <div class="bni-ic">📍</div>
+          <div class="bni-lb">Nearby</div>
+        </div>
+        <div class="bni on">
+          <div class="bni-ic">👤</div>
+          <div class="bni-lb">Profile</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+       DOCTOR PORTAL
+  ══════════════════════════════════════════ -->
+    <div class="screen" id="docportal">
+      <div class="dp-hdr">
+        <div class="sbar" style="background:transparent;height:auto;padding:0;margin-bottom:14px;">
+          <span class="sbar-t" style="color:rgba(255,255,255,.75);font-size:14px;">9:41</span>
+          <span class="sbar-r" style="color:rgba(255,255,255,.75)">📶 🔋</span>
+        </div>
+        <div class="dp-role">Doctor Portal</div>
+        <div class="dp-name">Dr. Priya Mehta 👩‍⚕️</div>
+        <div class="dp-sub">Rajasthan PHC No. 4 • Udaipur</div>
+        <div class="dp-chip">
+          <div class="dp-chip-dot"></div>
+          <span class="dp-chip-txt">Available • 8 patients in queue</span>
+        </div>
+      </div>
+
+      <!-- Tab bar -->
+      <div class="dp-tabs">
+        <div class="dp-tab on" id="dpt1" onclick="dpTab(1)">🏥 Queue</div>
+        <div class="dp-tab" id="dpt2" onclick="dpTab(2)">📦 Stock</div>
+        <div class="dp-tab" id="dpt3" onclick="dpTab(3)">🗺️ ASHA Routes</div>
+      </div>
+
+      <!-- TAB 1: Priority Queue -->
+      <div class="dp-panel show" id="dp1">
+        <div class="scroll">
+          <div class="slabel" style="margin-top:6px;">Today's Summary</div>
+          <div class="pq-summary">
+            <div class="pqs">
+              <div class="pqs-val">8</div>
+              <div class="pqs-lbl">In Queue</div>
+            </div>
+            <div class="pqs">
+              <div class="pqs-val" style="color:var(--red)">2</div>
+              <div class="pqs-lbl">🔴 Urgent</div>
+            </div>
+            <div class="pqs">
+              <div class="pqs-val" style="color:var(--gold-d)">3</div>
+              <div class="pqs-lbl">🟡 Monitor</div>
+            </div>
+            <div class="pqs">
+              <div class="pqs-val" style="color:var(--leaf-d)">3</div>
+              <div class="pqs-lbl">🟢 Stable</div>
+            </div>
+          </div>
+
+          <div class="slabel">Priority Queue (AI Ranked)</div>
+
+          <!-- Patient 1 — RED -->
+          <div class="patient-card">
+            <div class="pcard-priority" style="background:var(--red)"></div>
+            <div class="pc-num">1</div>
+            <div class="pc-av">👩</div>
+            <div style="flex:1">
+              <div class="pc-name">Sunita Devi, 58</div>
+              <div class="pc-sym">Chest pain + breathlessness</div>
+              <div class="pc-age">Diabetic • High BP history</div>
+            </div>
+            <div class="pc-right">
+              <div class="pc-badge" style="background:var(--red-l);color:var(--red)">🔴 URGENT</div>
+              <div class="pc-wait">Waiting 5 min</div>
+            </div>
+          </div>
+
+          <!-- Patient 2 — RED -->
+          <div class="patient-card">
+            <div class="pcard-priority" style="background:var(--red)"></div>
+            <div class="pc-num">2</div>
+            <div class="pc-av">👦</div>
+            <div style="flex:1">
+              <div class="pc-name">Rohit Kumar, 7</div>
+              <div class="pc-sym">High fever 104°F + seizure Hx</div>
+              <div class="pc-age">Child • No prior conditions</div>
+            </div>
+            <div class="pc-right">
+              <div class="pc-badge" style="background:var(--red-l);color:var(--red)">🔴 URGENT</div>
+              <div class="pc-wait">Waiting 12 min</div>
+            </div>
+          </div>
+
+          <!-- Patient 3 — YELLOW -->
+          <div class="patient-card">
+            <div class="pcard-priority" style="background:var(--gold)"></div>
+            <div class="pc-num">3</div>
+            <div class="pc-av">👨‍🌾</div>
+            <div style="flex:1">
+              <div class="pc-name">Ramesh Kumar, 42</div>
+              <div class="pc-sym">Fever + headache since 2 days</div>
+              <div class="pc-age">No prior conditions</div>
+            </div>
+            <div class="pc-right">
+              <div class="pc-badge" style="background:var(--gold-l);color:var(--gold-d)">🟡 Monitor</div>
+              <div class="pc-wait">Waiting 18 min</div>
+            </div>
+          </div>
+
+          <!-- Patient 4 — YELLOW -->
+          <div class="patient-card">
+            <div class="pcard-priority" style="background:var(--gold)"></div>
+            <div class="pc-num">4</div>
+            <div class="pc-av">👵</div>
+            <div style="flex:1">
+              <div class="pc-name">Kamla Bai, 65</div>
+              <div class="pc-sym">Joint pain + swelling</div>
+              <div class="pc-age">Arthritis history</div>
+            </div>
+            <div class="pc-right">
+              <div class="pc-badge" style="background:var(--gold-l);color:var(--gold-d)">🟡 Monitor</div>
+              <div class="pc-wait">Waiting 24 min</div>
+            </div>
+          </div>
+
+          <!-- Patient 5 — GREEN -->
+          <div class="patient-card">
+            <div class="pcard-priority" style="background:var(--leaf)"></div>
+            <div class="pc-num">5</div>
+            <div class="pc-av">👨</div>
+            <div style="flex:1">
+              <div class="pc-name">Vijay Singh, 29</div>
+              <div class="pc-sym">Mild cold + runny nose</div>
+              <div class="pc-age">No prior conditions</div>
+            </div>
+            <div class="pc-right">
+              <div class="pc-badge" style="background:var(--leaf-l);color:var(--leaf-d)">🟢 Stable</div>
+              <div class="pc-wait">Waiting 30 min</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: Stock Management -->
+      <div class="dp-panel" id="dp2">
+        <div class="scroll">
+          <!-- Critical alert banner -->
+          <div class="stock-alert-banner">
+            <div class="sab-icon">🚨</div>
+            <div>
+              <div class="sab-title">3 Critical Stock Alerts</div>
+              <div class="sab-txt">Paracetamol, ORS Sachets & Amoxicillin predicted to run out within 7 days. District
+                officer has been notified.</div>
+              <div class="sab-action">📨 View Redistribution Options</div>
+            </div>
+          </div>
+
+          <div class="slabel">Stock Levels</div>
+
+          <!-- Stock card — Critical -->
+          <div class="stock-card">
+            <div class="sk-top">
+              <div>
+                <div class="sk-name">Paracetamol 500mg</div>
+                <div class="sk-cat">Analgesic / Antipyretic</div>
+              </div>
+              <div class="sk-badge" style="background:var(--red-l);color:var(--red)">🔴 Critical</div>
+            </div>
+            <div class="sk-bar-track">
+              <div class="sk-bar-fill" style="width:12%;background:var(--red)"></div>
+            </div>
+            <div class="sk-row">
+              <div class="sk-stat"><strong>48</strong> units left</div>
+              <div class="sk-stat">Threshold: <strong>200</strong></div>
+              <div class="sk-predict" style="color:var(--red)">⏰ Runs out in 4 days</div>
+            </div>
+          </div>
+
+          <!-- Stock card — Low -->
+          <div class="stock-card">
+            <div class="sk-top">
+              <div>
+                <div class="sk-name">ORS Sachets</div>
+                <div class="sk-cat">Oral Rehydration</div>
+              </div>
+              <div class="sk-badge" style="background:var(--gold-l);color:var(--gold-d)">🟡 Low</div>
+            </div>
+            <div class="sk-bar-track">
+              <div class="sk-bar-fill" style="width:28%;background:var(--gold)"></div>
+            </div>
+            <div class="sk-row">
+              <div class="sk-stat"><strong>84</strong> units left</div>
+              <div class="sk-stat">Threshold: <strong>150</strong></div>
+              <div class="sk-predict" style="color:var(--gold-d)">⏰ Runs out in 7 days</div>
+            </div>
+          </div>
+
+          <!-- Stock card — OK -->
+          <div class="stock-card">
+            <div class="sk-top">
+              <div>
+                <div class="sk-name">Amoxicillin 500mg</div>
+                <div class="sk-cat">Antibiotic</div>
+              </div>
+              <div class="sk-badge" style="background:var(--gold-l);color:var(--gold-d)">🟡 Low</div>
+            </div>
+            <div class="sk-bar-track">
+              <div class="sk-bar-fill" style="width:35%;background:var(--gold)"></div>
+            </div>
+            <div class="sk-row">
+              <div class="sk-stat"><strong>105</strong> units left</div>
+              <div class="sk-stat">Threshold: <strong>200</strong></div>
+              <div class="sk-predict" style="color:var(--gold-d)">⏰ Runs out in 10 days</div>
+            </div>
+          </div>
+
+          <!-- Stock card — Good -->
+          <div class="stock-card">
+            <div class="sk-top">
+              <div>
+                <div class="sk-name">Metformin 500mg</div>
+                <div class="sk-cat">Antidiabetic</div>
+              </div>
+              <div class="sk-badge" style="background:var(--leaf-l);color:var(--leaf-d)">🟢 Good</div>
+            </div>
+            <div class="sk-bar-track">
+              <div class="sk-bar-fill" style="width:72%;background:var(--leaf)"></div>
+            </div>
+            <div class="sk-row">
+              <div class="sk-stat"><strong>360</strong> units left</div>
+              <div class="sk-stat">Threshold: <strong>100</strong></div>
+              <div class="sk-predict" style="color:var(--leaf-d)">✅ ~36 days remaining</div>
+            </div>
+          </div>
+
+          <!-- Redistribution suggestion -->
+          <div class="slabel">Redistribution Suggestions</div>
+          <div class="redistribute-card">
+            <div class="rc-title">💊 Paracetamol Surplus Nearby</div>
+            <div class="rc-row"><span>PHC Badi, Udaipur</span>
+              <div class="rc-arrow">→</div><span style="color:var(--leaf-d);font-weight:700">+380 units surplus</span>
+            </div>
+            <div style="font-size:12px;color:var(--sub);margin-bottom:10px;">8.2 km away • Estimated transfer: 45 min
+            </div>
+            <div class="rc-action">🚐 Request Transfer</div>
+          </div>
+          <div class="redistribute-card">
+            <div class="rc-title">🧪 ORS Sachets Nearby</div>
+            <div class="rc-row"><span>CHC Mavli, Udaipur</span>
+              <div class="rc-arrow">→</div><span style="color:var(--leaf-d);font-weight:700">+220 units surplus</span>
+            </div>
+            <div style="font-size:12px;color:var(--sub);margin-bottom:10px;">12.4 km away • Estimated transfer: 1h 20min
+            </div>
+            <div class="rc-action">🚐 Request Transfer</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: ASHA Routes -->
+      <div class="dp-panel" id="dp3">
+        <div class="scroll">
+          <div class="route-hdr-card">
+            <div class="rh-title">🗺️ Today's Optimised Route</div>
+            <div style="font-size:12px;color:var(--sub);">AI-ranked by patient priority + proximity</div>
+            <div class="rh-stats">
+              <div class="rh-stat">
+                <div class="rh-sv">5</div>
+                <div class="rh-sl">Visits</div>
+              </div>
+              <div class="rh-stat">
+                <div class="rh-sv">18.4</div>
+                <div class="rh-sl">Total km</div>
+              </div>
+              <div class="rh-stat">
+                <div class="rh-sv">3h 20m</div>
+                <div class="rh-sl">Est. Time</div>
+              </div>
+              <div class="rh-stat">
+                <div class="rh-sv">2</div>
+                <div class="rh-sl">High Priority</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="route-map">
+            <div class="rm-grid"></div>
+            <div class="rm-path"></div>
+            <div class="rm-pin rm-p1">📍</div>
+            <div class="rm-pin rm-p2">🏠</div>
+            <div class="rm-pin rm-p3">🏠</div>
+            <div class="rm-pin rm-p4">🏠</div>
+            <div class="rm-pin rm-p5">🏠</div>
+          </div>
+
+          <div class="slabel">Visit Order</div>
+
+          <div class="visit-card">
+            <div class="vc-step" style="background:var(--red)">1</div>
+            <div style="flex:1">
+              <div class="vc-name">Sunita Devi</div>
+              <div class="vc-det">Chest pain follow-up • Post-discharge check</div>
+            </div>
+            <div class="vc-right">
+              <div class="vc-dist">2.1 km</div>
+              <div class="vc-done-btn" style="background:var(--red-l);color:var(--red);">🔴 Priority</div>
+            </div>
+          </div>
+
+          <div class="visit-card">
+            <div class="vc-step" style="background:var(--red)">2</div>
+            <div style="flex:1">
+              <div class="vc-name">Bhairi Lal, 78</div>
+              <div class="vc-det">BP monitoring • Missed last 2 doses</div>
+            </div>
+            <div class="vc-right">
+              <div class="vc-dist">3.8 km</div>
+              <div class="vc-done-btn" style="background:var(--red-l);color:var(--red);">🔴 Priority</div>
+            </div>
+          </div>
+
+          <div class="visit-card">
+            <div class="vc-step" style="background:var(--gold)">3</div>
+            <div style="flex:1">
+              <div class="vc-name">Meena Kumari, 26</div>
+              <div class="vc-det">Antenatal check • 7 months pregnant</div>
+            </div>
+            <div class="vc-right">
+              <div class="vc-dist">5.2 km</div>
+              <div class="vc-done-btn" style="background:var(--gold-l);color:var(--gold-d);">🟡 Due</div>
+            </div>
+          </div>
+
+          <div class="visit-card">
+            <div class="vc-step" style="background:var(--leaf)">4</div>
+            <div style="flex:1">
+              <div class="vc-name">Ram Prasad, 55</div>
+              <div class="vc-det">Diabetic routine check • Monthly</div>
+            </div>
+            <div class="vc-right">
+              <div class="vc-dist">4.4 km</div>
+              <div class="vc-done-btn" style="background:var(--leaf-l);color:var(--leaf-d);">✅ Done</div>
+            </div>
+          </div>
+
+          <div class="visit-card">
+            <div class="vc-step" style="background:var(--leaf)">5</div>
+            <div style="flex:1">
+              <div class="vc-name">Lalita Sharma, 35</div>
+              <div class="vc-det">Post-vaccination check • OPV</div>
+            </div>
+            <div class="vc-right">
+              <div class="vc-dist">2.9 km</div>
+              <div class="vc-done-btn" style="background:var(--leaf-l);color:var(--leaf-d);">🟢 Stable</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Doctor portal bottom nav -->
+      <div class="dp-bnav">
+        <div class="dp-bni on" onclick="dpTab(1)">
+          <div class="dp-bni-ic">🏥</div>
+          <div class="dp-bni-lb">Queue</div>
+        </div>
+        <div class="dp-bni" onclick="dpTab(2)">
+          <div class="dp-bni-ic">📦</div>
+          <div class="dp-bni-lb">Stock</div>
+        </div>
+        <div class="dp-bni" onclick="dpTab(3)">
+          <div class="dp-bni-ic">🗺️</div>
+          <div class="dp-bni-lb">Routes</div>
+        </div>
+        <div class="dp-bni">
+          <div class="dp-bni-ic">👩‍⚕️</div>
+          <div class="dp-bni-lb">Profile</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOS MODAL -->
+    <div class="sos-modal" id="sosModal" onclick="hideSos(event)">
+      <div class="sos-sheet" onclick="event.stopPropagation()">
+        <div class="sos-handle"></div>
+        <div class="sos-title">🚨 Emergency Help</div>
+        <div class="sos-sub">Choose what you need right now</div>
+        <div class="sos-opt c">
+          <div class="so-ic">📞</div>
+          <div>
+            <div class="so-lbl" style="color:var(--red)">Call 112 — Emergency</div>
+            <div class="so-sub">Police, Ambulance, Fire — Free 24/7</div>
+          </div>
+          <div class="so-arr">→</div>
+        </div>
+        <div class="sos-opt l">
+          <div class="so-ic">📍</div>
+          <div>
+            <div class="so-lbl" style="color:var(--sky)">Share My Location</div>
+            <div class="so-sub">Send GPS to family or doctor</div>
+          </div>
+          <div class="so-arr">→</div>
+        </div>
+        <div class="sos-opt h">
+          <div class="so-ic">🏥</div>
+          <div>
+            <div class="so-lbl" style="color:var(--leaf-d)">Nearest Hospital</div>
+            <div class="so-sub">Get directions now</div>
+          </div>
+          <div class="so-arr">→</div>
+        </div>
+        <div class="sos-dis" onclick="hideSos()">Dismiss</div>
+      </div>
+    </div>
+
+  </div><!-- end device -->
+
+  <script>
+    /* ────────── INIT ────────── */
+    var obSlide = 1;
+    var vcInterval = null;
+    var vcSecs = 0;
+
+    (function init() {
+      document.querySelectorAll('.screen').forEach(function (s) {
+        if (!s.classList.contains('active')) s.style.display = 'none';
+      });
+    })();
+
+    /* ────────── NAVIGATION ────────── */
+    function go(id) {
+      document.querySelectorAll('.screen').forEach(function (s) {
+        s.classList.remove('active');
+        s.style.display = 'none';
+      });
+      var t = document.getElementById(id);
+      if (!t) return;
+      t.style.display = 'flex';
+      void t.offsetWidth;
+      t.classList.add('active');
+
+      document.querySelectorAll('.nav-btn').forEach(function (b) { b.classList.remove('cur'); });
+      var nb = document.getElementById('nb-' + id);
+      if (nb) nb.classList.add('cur');
+
+      if (id === 'symptom') {
+        setTimeout(function () {
+          var cs = document.getElementById('chatScroll');
+          if (cs) cs.scrollTop = cs.scrollHeight;
+        }, 100);
+      }
+      if (id !== 'doctor') {
+        var vc = document.getElementById('vcall');
+        if (vc) vc.classList.remove('show');
+        stopCall();
+      }
+    }
+
+    /* ────────── API CLIENT ────────── */
+    const API_BASE = 'http://localhost:8000/api/v1';
+    let authToken = localStorage.getItem('access_token');
+
+    async function apiRequest(endpoint, method = 'GET', data = null) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+      const options = { method, headers };
+      if (data) options.body = JSON.stringify(data);
+
+      try {
+        const res = await fetch(`${API_BASE}${endpoint}`, options);
+        return await res.json();
+      } catch (err) {
+        console.error("API Error:", err);
+        return null;
+      }
+    }
+
+    /* ────────── ONBOARDING ────────── */
+    async function nextSlide() {
+      var cur = document.getElementById('ob' + obSlide);
+      if (cur) cur.classList.remove('active');
+      obSlide++;
+      if (obSlide > 3) {
+        // Auto-register mock user for demo
+        const res = await apiRequest('/auth/register/', 'POST', { phone_number: '+919999999999', name: 'Ramesh Kumar' });
+        if (res && res.data && res.data.access) {
+          authToken = res.data.access;
+          localStorage.setItem('access_token', authToken);
+        }
+        go('home');
+        return;
+      }
+      var next = document.getElementById('ob' + obSlide);
+      if (next) next.classList.add('active');
+      var fill = document.getElementById('ob-fill');
+      if (fill) fill.style.width = Math.round(obSlide / 3 * 100) + '%';
+      var lbl = document.getElementById('ob-step-lbl');
+      if (lbl) lbl.textContent = obSlide + ' of 3';
+    }
+
+    /* ────────── LANGUAGE PILLS ────────── */
+    document.querySelectorAll('.lpill').forEach(function (p) {
+      p.addEventListener('click', function () {
+        document.querySelectorAll('.lpill').forEach(function (x) { x.classList.remove('on'); x.classList.add('off'); });
+        p.classList.add('on'); p.classList.remove('off');
+      });
+    });
+
+    /* ────────── FILTER PILLS ────────── */
+    document.querySelectorAll('.fpill').forEach(function (p) {
+      p.addEventListener('click', function () {
+        document.querySelectorAll('.fpill').forEach(function (x) { x.classList.remove('on'); });
+        p.classList.add('on');
+      });
+    });
+
+    /* ────────── MEDICINE MODES ────────── */
+    function selMode(n) {
+      [1, 2, 3].forEach(function (i) {
+        var m = document.getElementById('m' + i);
+        if (!m) return;
+        m.classList.remove('on');
+        var lb = m.querySelector('.mm-lb');
+        if (lb) lb.style.color = 'rgba(255,255,255,0.85)';
+      });
+      var sel = document.getElementById('m' + n);
+      if (!sel) return;
+      sel.classList.add('on');
+      var selLb = sel.querySelector('.mm-lb');
+      if (selLb) selLb.style.color = 'var(--mud)';
+    }
+
+    /* ────────── SIDE EFFECTS TOGGLE ────────── */
+    function toggleSe() {
+      var c = document.getElementById('seCont');
+      var ic = document.getElementById('seIc');
+      if (!c || !ic) return;
+      c.classList.toggle('show');
+      ic.classList.toggle('open');
+    }
+
+    /* ────────── DOCTOR PORTAL TABS ────────── */
+    function dpTab(n) {
+      [1, 2, 3].forEach(function (i) {
+        var t = document.getElementById('dpt' + i);
+        var p = document.getElementById('dp' + i);
+        if (t) t.classList.remove('on');
+        if (p) { p.classList.remove('show'); p.style.display = ''; }
+      });
+      var selT = document.getElementById('dpt' + n);
+      var selP = document.getElementById('dp' + n);
+      if (selT) selT.classList.add('on');
+      if (selP) { selP.classList.add('show'); selP.style.display = 'flex'; }
+
+      // Bottom nav highlight
+      document.querySelectorAll('.dp-bni').forEach(function (b) { b.classList.remove('on'); });
+      var bnis = document.querySelectorAll('.dp-bni');
+      if (bnis[n - 1]) bnis[n - 1].classList.add('on');
+    }
+
+    /* ────────── CHAT ────────── */
+    var aiReplies = [
+      'ठीक है, समझ गया। क्या उल्टी या जी मिचलाना भी है?\n\nOK understood. Any nausea or vomiting?',
+      'आपके लक्षण वायरल बुखार जैसे हैं। एक बार डॉक्टर से जरूर बात करें।\n\nSymptoms look like viral fever. Please consult a doctor.',
+      'क्या आपके घर में थर्मामीटर है? बुखार नापकर बताएं।\n\nDo you have a thermometer? Please measure your temperature.',
+      'आराम करें और भरपूर पानी पिएं। 2 दिन में ठीक न हों तो डॉक्टर देखें।\n\nRest and drink fluids. If not better in 2 days, see a doctor.'
+    ];
+    var aiIdx = 0;
+
+    async function sendMsg() {
+      var f = document.getElementById('chatInput');
+      if (!f) return;
+      var txt = f.value.trim();
+      if (!txt) return;
+      addBubble(txt, 'user');
+      f.value = '';
+      showTyping();
+
+      const res = await apiRequest('/ai/chat/', 'POST', { text: txt });
+      removeTyping();
+
+      if (res && res.success) {
+        addBubble(res.data.reply, 'ai');
+      } else {
+        addBubble("Sorry, I could not connect to the server.", 'ai');
+      }
+    }
+
+    async function sendQuick(txt) {
+      addBubble(txt, 'user');
+      showTyping();
+      const res = await apiRequest('/ai/chat/', 'POST', { text: txt });
+      removeTyping();
+      if (res && res.success) {
+        addBubble(res.data.reply, 'ai');
+      } else {
+        addBubble("Sorry, I could not connect to the server.", 'ai');
+      }
+    }
+
+    function addBubble(txt, who) {
+      var cs = document.getElementById('chatScroll');
+      if (!cs) return;
+      var now = new Date();
+      var time = ('' + now.getHours()).padStart(2, '0') + ':' + ('' + now.getMinutes()).padStart(2, '0');
+      var row = document.createElement('div');
+      row.className = 'brow' + (who === 'user' ? ' user' : '');
+      var av = document.createElement('div');
+      av.className = 'bav ' + who;
+      av.textContent = who === 'ai' ? '🤖' : '👨‍🌾';
+      var wrap = document.createElement('div');
+      wrap.className = 'bwrap';
+      var bub = document.createElement('div');
+      bub.className = 'bubble ' + who;
+      bub.innerHTML = txt.replace(/\n/g, '<br>');
+      wrap.appendChild(bub);
+      if (who === 'ai') {
+        var lb = document.createElement('div');
+        lb.className = 'listen-btn';
+        lb.textContent = '🔊 सुनें';
+        wrap.appendChild(lb);
+      }
+      var bt = document.createElement('div');
+      bt.className = 'btime' + (who === 'user' ? ' user' : '');
+      bt.textContent = time + (who === 'user' ? ' • 🎤 Voice' : '');
+      wrap.appendChild(bt);
+      row.appendChild(av);
+      row.appendChild(wrap);
+      cs.appendChild(row);
+      cs.scrollTop = cs.scrollHeight;
+    }
+
+    function showTyping() {
+      var cs = document.getElementById('chatScroll');
+      if (!cs) return;
+      var row = document.createElement('div');
+      row.className = 'brow';
+      row.id = 'typingRow';
+      row.innerHTML = '<div class="bav ai">🤖</div><div class="bubble ai" style="padding:14px 18px"><div class="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>';
+      cs.appendChild(row);
+      cs.scrollTop = cs.scrollHeight;
+    }
+
+    function removeTyping() {
+      var t = document.getElementById('typingRow');
+      if (t) t.remove();
+    }
+
+    /* ────────── VIDEO CALL ────────── */
+    function startCall() {
+      var vc = document.getElementById('vcall');
+      if (!vc) return;
+      vc.classList.add('show');
+      vcSecs = 0;
+      if (vcInterval) clearInterval(vcInterval);
+      vcInterval = setInterval(function () {
+        vcSecs++;
+        var m = ('' + Math.floor(vcSecs / 60)).padStart(2, '0');
+        var s = ('' + (vcSecs % 60)).padStart(2, '0');
+        var t = document.getElementById('vcTimer');
+        if (t) t.textContent = m + ':' + s;
+      }, 1000);
+    }
+
+    function endCall() {
+      var vc = document.getElementById('vcall');
+      if (vc) vc.classList.remove('show');
+      stopCall();
+    }
+
+    function stopCall() {
+      if (vcInterval) { clearInterval(vcInterval); vcInterval = null; }
+    }
+
+    /* ────────── SOS ────────── */
+    function showSos() {
+      var m = document.getElementById('sosModal');
+      if (m) m.classList.add('show');
+    }
+
+    function hideSos(e) {
+      if (!e || e.target === document.getElementById('sosModal')) {
+        var m = document.getElementById('sosModal');
+        if (m) m.classList.remove('show');
+      }
+    }
+
+    /* ────────── SPLASH LANG DOTS ────────── */
+    document.querySelectorAll('.ldot').forEach(function (d) {
+      d.addEventListener('click', function (e) {
+        e.stopPropagation();
+        document.querySelectorAll('.ldot').forEach(function (x) { x.classList.remove('sel'); });
+        d.classList.add('sel');
+      });
+    });
+  </script>
+</body>
+
+</html>

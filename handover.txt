@@ -1,0 +1,942 @@
+🌿  AarogyaPath
+आपकी सेहत, हमारी राह
+Backend Engineering Handover Document
+VERSION 1.0  •  CONFIDENTIAL  •  INTERNAL USE ONLY
+HealthTech Hackathon 2025  |  Team AarogyaPath
+1. Project Overview & Architecture
+AarogyaPath is a dual-portal healthcare app (Patient + Doctor/Clinic) for rural India. The patient app is a mobile-width HTML/CSS/JS site; the doctor portal is a separate HTML/CSS/JS dashboard. Both are served by a Django REST Framework backend deployed on Railway.
+1.1 System Architecture
+Patient App (HTML/CSS/JS + Web Speech API)
+  ↕  fetch() / Agora Web SDK / Google Maps JS SDK
+  ↕  HTTPS REST + WebSocket (Django Channels)
+Django REST API — Railway (backend)
+  ├── PostgreSQL (Railway managed DB)
+  ├── Gemini 1.5 Flash API  (AI triage)
+  ├── Google Translate API  (12 languages)
+  ├── Agora.io Web SDK      (video calls)
+  └── Google Maps JS SDK    (nearby, routing)
+ 
+Doctor Portal (HTML/CSS/JS)
+  ↕  fetch() REST
+  → Queue engine | Stock ML | Route optimiser
+ 
+Frontend static files → Vercel CDN
+Backend API            → Railway
+1.2 Key Principles
+Offline-first: localStorage cache for patient reads; sync via delta endpoint on reconnect
+Low-bandwidth: response pagination (20 items max), compressed images, lazy loads
+Voice-first: Web Speech API (SpeechRecognition + SpeechSynthesis) — zero external cost
+Vernacular: Google Translate API translates AI responses per Accept-Language header
+Security: Django SimpleJWT, HTTPS only, ABHA data encrypted at rest
+2. Confirmed Tech Stack
+Frontend (Patient)
+HTML + CSS + JavaScript (mobile-width layout) — served via Vercel
+Frontend (Doctor)
+HTML + CSS + JavaScript (dashboard layout) — served via Vercel
+Styling
+Tailwind CSS via CDN (no build step required)
+Backend Framework
+Django 4.2 + Django REST Framework 3.15
+Auth
+Django SimpleJWT — access token (15 min) + refresh token (7 days)
+Database
+PostgreSQL — Railway managed instance
+AI Agent
+Gemini 1.5 Flash API — symptom triage, health Q&A, medicine info
+Voice
+Web Speech API (browser built-in) — SpeechRecognition + SpeechSynthesis
+Translation
+Google Translate API — 12+ Indian languages
+Maps
+Google Maps JavaScript SDK — nearby clinics, pharmacy finder, routing
+Video Calls
+Agora.io Web SDK v4 — low-bandwidth video consultations
+Deployment Backend
+Railway — auto-deploy from GitHub, managed PostgreSQL, env vars
+Deployment Frontend
+Vercel — auto-deploy from GitHub, CDN edge, zero config
+2.1 What NOT to Use
+No Celery / Redis — Railway free tier does not support background workers. Use Django management commands triggered by cron or Railway scheduled jobs instead.
+No Google Cloud STT/TTS — replaced by Web Speech API (free, in-browser, no API key needed)
+No PouchDB — replaced by localStorage + sessionStorage for offline caching
+No Docker — Railway handles containerisation automatically from Procfile
+No AWS / GCP hosting — Railway (backend) + Vercel (frontend) only
+3. Environment Setup
+3.1 Required Environment Variables (set in Railway dashboard)
+Field
+Type
+Nullable
+Description
+SECRET_KEY
+string
+NO
+Django secret key — min 50 random chars
+DEBUG
+boolean
+NO
+Set to False in production always
+ALLOWED_HOSTS
+string
+NO
+Comma-separated: your-app.railway.app,your-domain.com
+DATABASE_URL
+string
+NO
+Auto-injected by Railway PostgreSQL plugin
+GEMINI_API_KEY
+string
+NO
+Google Gemini API key from AI Studio
+GOOGLE_TRANSLATE_KEY
+string
+NO
+Google Cloud API key with Translate API enabled
+GOOGLE_MAPS_KEY
+string
+NO
+Google Maps JS API key (restrict to your domain)
+AGORA_APP_ID
+string
+NO
+Agora Application ID from console.agora.io
+AGORA_APP_CERT
+string
+NO
+Agora App Certificate for server-side token generation
+FRONTEND_URL
+string
+NO
+Your Vercel URL for CORS whitelist e.g. https://app.vercel.app
+ENCRYPTION_KEY
+string
+NO
+AES-256 key for ABHA / Ayushman card number encryption
+3.2 Railway Deployment
+# Procfile (place in repo root)
+web: gunicorn aarogyapath.wsgi:application --bind 0.0.0.0:$PORT
+ 
+# runtime.txt
+python-3.11.6
+ 
+# On Railway:
+# 1. New Project → Deploy from GitHub repo
+# 2. Add PostgreSQL plugin (DATABASE_URL auto-set)
+# 3. Add all env vars from table above
+# 4. Railway auto-builds and deploys on every git push
+3.3 Vercel Deployment (Frontend)
+# vercel.json (place in frontend repo root)
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
+ 
+# In Vercel dashboard:
+# 1. Import GitHub repo
+# 2. Framework Preset: Other
+# 3. Build Command: (leave empty)
+# 4. Output Directory: . (root, or /public)
+# 5. Add env var: VITE_API_BASE=https://your-app.railway.app
+3.4 Local Development
+git clone https://github.com/your-org/aarogyapath
+cd aarogyapath
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env    # fill in your keys
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py loaddata fixtures/medicines.json
+python manage.py runserver
+4. Database Schema (PostgreSQL)
+4.1 users_patient
+Field
+Type
+Nullable
+Description
+id
+UUID PK
+NO
+Auto-generated primary key
+phone_number
+varchar(15)
+NO
+Unique; used as login identifier (+91...)
+name
+varchar(100)
+NO
+Full name in preferred language
+date_of_birth
+date
+YES
+For age-based dosage recommendations
+gender
+varchar(10)
+YES
+male / female / other / prefer_not_to_say
+abha_id
+varchar(40)
+YES
+AES-256 encrypted Ayushman Bharat Health ID
+language_pref
+varchar(10)
+NO
+BCP-47 code: hi, ta, te, bn, pa, mr, gu...
+district
+varchar(100)
+YES
+District for regional health data
+state
+varchar(50)
+YES
+State name
+ayushman_card_no
+varchar(40)
+YES
+AES-256 encrypted — free treatment eligibility
+is_verified
+boolean
+NO
+OTP verification completed
+is_active
+boolean
+NO
+Account active flag
+last_sync_at
+timestamptz
+YES
+Last successful localStorage sync
+created_at
+timestamptz
+NO
+Auto-set on creation
+updated_at
+timestamptz
+NO
+Auto-updated on save
+4.2 users_doctor
+Field
+Type
+Nullable
+Description
+id
+UUID PK
+NO
+Auto-generated primary key
+phone_number
+varchar(15)
+NO
+Unique login identifier
+name
+varchar(100)
+NO
+Full name
+registration_no
+varchar(50)
+NO
+Medical council registration number
+qualification
+varchar(50)
+NO
+MBBS / AYUSH / BDS / MS etc.
+specialisation
+varchar(100)
+YES
+General / Pediatric / Gynaec etc.
+languages
+text
+NO
+Comma-separated BCP-47 codes: hi,en,ta
+clinic_id
+UUID FK
+YES
+FK → clinics_clinic
+is_verified
+boolean
+NO
+Verified by admin
+is_available
+boolean
+NO
+Currently accepting patients
+avg_rating
+decimal(3,2)
+YES
+Denormalised average rating
+total_reviews
+int
+NO
+Count of reviews
+created_at
+timestamptz
+NO
+Auto-set
+4.3 health_consultation
+Field
+Type
+Nullable
+Description
+id
+UUID PK
+NO
+Primary key
+patient_id
+UUID FK
+NO
+FK → users_patient
+doctor_id
+UUID FK
+YES
+FK → users_doctor (null for AI-only)
+type
+varchar(20)
+NO
+ai_chat / video / in_person / async_chat
+status
+varchar(20)
+NO
+queued / active / completed / cancelled
+queue_position
+int
+YES
+Position in doctor queue
+triage_level
+varchar(10)
+YES
+green / yellow / red (from AI)
+ai_summary
+text
+YES
+AI-generated consultation summary
+agora_channel
+varchar(100)
+YES
+Agora RTC channel name
+started_at
+timestamptz
+YES
+When call/chat started
+ended_at
+timestamptz
+YES
+When ended
+created_at
+timestamptz
+NO
+Booking time
+4.4 health_message
+Field
+Type
+Nullable
+Description
+id
+UUID PK
+NO
+Primary key
+consultation_id
+UUID FK
+NO
+FK → health_consultation
+sender_type
+varchar(10)
+NO
+patient / doctor / ai
+sender_id
+UUID
+YES
+Patient or doctor UUID (null for AI)
+content
+text
+NO
+Message text in sender language
+content_en
+text
+YES
+English translation for doctor fallback
+input_type
+varchar(10)
+NO
+text / voice / image
+is_triage_result
+boolean
+NO
+True if this is AI triage message
+created_at
+timestamptz
+NO
+Auto-set
+4.5 medicine_drug
+Field
+Type
+Nullable
+Description
+id
+int PK
+NO
+Auto-increment primary key
+name_en
+varchar(200)
+NO
+Generic name in English
+brand_names
+text
+YES
+Comma-separated common brand names
+drug_class
+varchar(100)
+YES
+Pharmacological class
+uses_en
+text
+NO
+Uses in plain English
+dosage_json
+text
+YES
+JSON string: {adult, child, elderly}
+side_effects_en
+text
+YES
+Common side effects in English
+warnings_en
+text
+YES
+Contraindications and warnings
+interactions
+text
+YES
+Comma-separated interaction drug names
+schedule
+varchar(5)
+YES
+H / H1 / G / OTC (Indian scheduling)
+jan_aushadhi
+boolean
+NO
+Available at Jan Aushadhi outlets
+price_min_paise
+int
+YES
+Minimum market price in paise
+price_max_paise
+int
+YES
+Maximum market price in paise
+4.6 clinic_stock
+Field
+Type
+Nullable
+Description
+id
+UUID PK
+NO
+Primary key
+clinic_id
+UUID FK
+NO
+FK → clinics_clinic
+drug_id
+int FK
+NO
+FK → medicine_drug
+current_qty
+int
+NO
+Units currently in stock
+min_threshold
+int
+NO
+Alert threshold in units
+avg_daily_usage
+decimal(8,2)
+YES
+Rolling 30-day average daily usage
+predicted_stockout
+date
+YES
+Predicted depletion date (computed)
+updated_at
+timestamptz
+NO
+Auto-updated on every restock entry
+5. API Endpoints
+Base URL: https://your-app.railway.app/api/v1/
+5.1 Auth
+Method
+Endpoint
+Auth
+Description
+Response
+POST
+/auth/otp/send/
+None
+Send OTP to phone (3 per hour rate limit)
+{ success }
+POST
+/auth/otp/verify/
+None
+Verify OTP → returns JWT pair + user profile
+{ access, refresh, user }
+POST
+/auth/token/refresh/
+None
+Refresh access token using refresh token
+{ access }
+POST
+/auth/register/
+None
+Register patient after OTP verify
+{ user, access, refresh }
+POST
+/auth/logout/
+JWT
+Blacklist refresh token on logout
+{ success: true }
+5.2 Patient
+Method
+Endpoint
+Auth
+Description
+Response
+GET
+/patient/profile/
+JWT
+Own profile + health summary
+{ patient, vitals, upcoming }
+PATCH
+/patient/profile/
+JWT
+Update name, language, location
+{ patient }
+GET
+/patient/vitals/
+JWT
+Paginated vitals history (temp, BP, SpO2)
+Paginated list
+POST
+/patient/vitals/
+JWT
+Log a new vital reading
+{ vital }
+GET
+/patient/prescriptions/
+JWT
+Paginated prescriptions list
+Paginated list
+GET
+/patient/sync/
+JWT
+Delta sync: changes since ?since=ISO8601
+{ delta, delta_ts }
+5.3 AI Chat & Symptom Checker (Gemini)
+Method
+Endpoint
+Auth
+Description
+Response
+POST
+/ai/chat/
+JWT
+Send message; Gemini responds in user language
+{ reply, triage_level, msg_id }
+POST
+/ai/triage/
+JWT
+Force triage assessment for symptom list
+{ level, advice, recommend_doctor }
+GET
+/ai/chat/history/{id}/
+JWT
+Full message history for a consultation
+List of messages
+5.4 Voice (Web Speech API — frontend only, no backend endpoint)
+Voice input/output is handled entirely by the Web Speech API in the browser. The browser's SpeechRecognition produces a transcript string, which is sent as a normal text message to POST /ai/chat/. SpeechSynthesis reads the AI reply aloud. No backend endpoint is needed.
+5.5 Consultations & Queue
+Method
+Endpoint
+Auth
+Description
+Response
+GET
+/consultations/
+JWT
+List patient consultations (past + upcoming)
+Paginated list
+POST
+/consultations/
+JWT
+Book consultation (doctor_id optional for AI)
+{ consultation, queue_position }
+GET
+/consultations/{id}/
+JWT
+Consultation detail + messages
+{ consultation, messages }
+PATCH
+/consultations/{id}/
+JWT
+Update status — patient cancel
+{ consultation }
+GET
+/consultations/{id}/agora-token/
+JWT
+Get Agora RTC token for this call
+{ token, channel, uid, app_id }
+GET
+/queue/position/
+JWT
+Current queue position + ETA for active booking
+{ position, eta_minutes }
+5.6 Doctors
+Method
+Endpoint
+Auth
+Description
+Response
+GET
+/doctors/
+JWT
+List available doctors (?lang=hi&available=true)
+Paginated list
+GET
+/doctors/{id}/
+JWT
+Doctor profile + reviews
+{ doctor, reviews }
+GET
+/doctors/queue/
+Doctor
+Doctor's own patient queue ranked by triage
+List of consultations
+PATCH
+/doctors/availability/
+Doctor
+Toggle is_available
+{ doctor }
+POST
+/doctors/{id}/review/
+JWT
+Submit star rating after consultation
+{ review }
+5.7 Medicines
+Method
+Endpoint
+Auth
+Description
+Response
+GET
+/medicines/
+None
+Search by ?q= text; partial match supported
+Paginated list
+GET
+/medicines/{id}/
+None
+Drug detail; pass ?lang=hi for translated fields
+{ drug }
+GET
+/medicines/interactions/
+JWT
+Check interactions: ?drugs=id1,id2,id3
+{ interactions, warnings }
+Note: OCR is handled on the frontend using the device camera + a canvas screenshot sent as base64 to POST /medicines/ocr/ below.
+Method
+Endpoint
+Auth
+Description
+Response
+POST
+/medicines/ocr/
+JWT
+Upload base64 medicine label image → drug match
+{ drugs }
+5.8 Nearby (Google Maps JS SDK — mostly frontend)
+The Google Maps JS SDK runs in the browser. The backend only provides the structured clinic/pharmacy data; the SDK renders the map, pins, and directions.
+Method
+Endpoint
+Auth
+Description
+Response
+GET
+/nearby/clinics/
+JWT
+?lat=&lng=&radius= returns sorted clinic list
+List of clinics
+GET
+/nearby/pharmacies/
+JWT
+?lat=&lng= pharmacies within 5km default
+List of pharmacies
+5.9 Stock Management (Doctor Portal)
+Method
+Endpoint
+Auth
+Description
+Response
+GET
+/stock/
+Doctor
+All stock for own clinic; ?alert=true for low only
+Paginated list
+PATCH
+/stock/{id}/
+Doctor
+Update current_qty on restock
+{ stock }
+GET
+/stock/alerts/
+Doctor
+Drugs predicted to stockout in 14 days
+List with predicted dates
+GET
+/stock/nearby-surplus/
+Doctor
+Nearby clinics with surplus of low drugs
+List of redistribution options
+5.10 ASHA Route Optimisation
+Method
+Endpoint
+Auth
+Description
+Response
+GET
+/routes/daily/
+Doctor
+Optimised daily visit route (Google Maps Directions API — server-side)
+{ waypoints, total_km, ordered_patients }
+POST
+/routes/mark-visited/
+Doctor
+Mark patient visit complete; update priority score
+{ success }
+6. Authentication & Security
+6.1 SimpleJWT Configuration
+Access Token TTL
+15 minutes — short to limit exposure
+Refresh Token TTL
+7 days — stored in HttpOnly cookie
+Algorithm
+HS256
+Rotation
+Refresh token rotated on every use (ROTATE_REFRESH_TOKENS = True)
+Blacklist
+rest_framework_simplejwt.token_blacklist enabled — invalidated on logout
+OTP Rate Limit
+3 OTPs per phone per hour — Django cache counter (DB cache backend)
+OTP TTL
+5 minutes — stored in Django cache
+6.2 CORS
+# settings.py
+CORS_ALLOWED_ORIGINS = [
+    os.environ.get("FRONTEND_URL", "http://localhost:3000"),
+]
+CORS_ALLOW_CREDENTIALS = True
+6.3 Data Protection
+ABHA ID & Ayushman card number: encrypted with AES-256 via django-encrypted-model-fields before storage
+All API calls HTTPS only — Railway provides TLS automatically
+Google Maps API key: restricted to Vercel domain in Google Cloud console
+Agora tokens: generated server-side (POST /consultations/{id}/agora-token/) — never expose App Certificate to frontend
+DPDP Act: explicit consent collected on registration, stored in consent_log table
+6.4 Role-Based Access
+patient — can only access their own data. Enforced at queryset level, not just serializer.
+doctor — own consultations, own clinic stock, assigned patient records only
+admin — Django admin full access
+Use custom DRF permission classes: IsPatientOwner, IsDoctorOwner. Never rely on serializer-level filtering alone.
+7. AI Agent — Gemini 1.5 Flash
+7.1 Symptom Checker Flow
+Frontend sends full conversation history in every POST /ai/chat/ request (stateless API)
+Backend prepends a system prompt with patient context, then calls Gemini 1.5 Flash
+Gemini responds in patient's language_pref (injected in system prompt)
+After ≤ 5 exchanges, Gemini outputs a JSON triage block parsed by backend
+Backend persists only the final triage message to health_message
+7.2 System Prompt Template
+SYSTEM: You are AarogyaPath health triage assistant for rural India.
+Language: {language_name} (BCP-47: {language_code})
+Patient: {patient_name}, age {age}, district: {district}
+ 
+Rules:
+1. Respond ONLY in {language_name}. Never switch languages.
+2. Use simple non-medical language, as if explaining to a farmer.
+3. After max 5 exchanges, output ONLY this JSON (no other text):
+   {"triage":"green|yellow|red","advice":"...","recommend_doctor":true|false}
+4. NEVER diagnose. Always add disclaimer in every reply.
+5. Red flags (chest pain, unconscious, seizure, severe bleed):
+   → immediately output {"triage":"red",...} and advise calling 112.
+7.3 Translation
+Google Translate API is called before returning the AI response to patients when their language is not Hindi/English. Cache translations in Django's DB cache for 24h to minimise API costs.
+7.4 Fallback
+If Gemini returns error or times out (> 8s): return HTTP 504 with error code AI_TIMEOUT
+Frontend shows: "Our assistant is busy. Please try again or call a doctor directly."
+No GPT fallback in this stack — keep it simple for hackathon
+8. Offline Strategy (localStorage)
+Since there is no PouchDB or service worker, offline support is implemented via localStorage in the browser.
+8.1 What is Cached in localStorage
+patient_profile
+User profile JSON — refreshed on login and every app open
+upcoming_consult
+Next appointment JSON — refreshed hourly
+medicines_cache
+Last 20 searched medicines — permanent, evict oldest on limit
+nearby_cache
+Last nearby results with timestamp — expire after 6 hours
+vitals_queue
+Vitals logged offline — array of objects, flushed on reconnect
+last_sync_ts
+ISO8601 timestamp of last successful API sync
+8.2 Sync Endpoint
+GET /api/v1/patient/sync/?since=<ISO8601> returns all patient-related records changed since the given timestamp. Frontend calls this on app open if online, then updates localStorage.
+8.3 Conflict Rule
+Vitals logged offline (in vitals_queue) are appended — never overwrite. They each get a client-generated UUID so duplicates are rejected server-side by unique constraint.
+9. Stock Shortage Prediction
+Use a simple linear regression (Python, scikit-learn) on the last 30 days of daily_usage per clinic per drug. Run as a Django management command triggered by a Railway cron job.
+9.1 Management Command
+# Run daily at 2 AM IST via Railway cron
+python manage.py predict_stock
+ 
+# Logic:
+# For each clinic_stock row:
+#   1. Fetch last 30 days usage from health_stock_usage
+#   2. Fit LinearRegression on day_index vs qty_used
+#   3. Predict days until current_qty reaches 0
+#   4. Set predicted_stockout = today + predicted_days
+#   5. If predicted_stockout <= 14 days: flag as alert
+10. Video Calls — Agora.io Web SDK
+10.1 Token Generation (Server-side)
+NEVER expose AGORA_APP_CERT to the frontend. Generate tokens server-side.
+# pip install agora-token-builder
+from agora_token_builder import RtcTokenBuilder, Role_Publisher
+ 
+def generate_agora_token(channel_name, uid, expiry_seconds=3600):
+    return RtcTokenBuilder.buildTokenWithUid(
+        APP_ID, APP_CERT, channel_name, uid,
+        Role_Publisher, expiry_seconds
+    )
+10.2 Frontend Integration
+// In consultation page JS — include Agora Web SDK via CDN
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
+ 
+const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+const { token, channel, uid, app_id } = await fetchAgoraToken(consultId);
+await client.join(app_id, channel, token, uid);
+// Publish local tracks, subscribe to remote tracks...
+11. Frontend ↔ Backend Contract
+11.1 Response Envelope
+// ALL responses must follow this envelope:
+{
+  "success": true | false,
+  "data": { ... },         // on success
+  "error": {               // on failure
+    "code": "AUTH_INVALID",
+    "message": "...",      // English, human-readable
+    "field": "phone_number" // optional, for validation errors
+  },
+  "meta": {               // paginated lists only
+    "page": 1,
+    "page_size": 20,
+    "total": 150,
+    "next": "/api/v1/...?page=2"
+  }
+}
+11.2 Required Request Headers
+Field
+Type
+Nullable
+Description
+Authorization
+string
+NO
+Bearer <access_token> on all authenticated endpoints
+Accept-Language
+string
+YES
+BCP-47 code (hi, ta, te…) — AI responds in this language
+X-Device-ID
+string
+YES
+Unique browser UUID for offline sync tracking (localStorage)
+Content-Type
+string
+NO
+application/json (or multipart/form-data for image uploads)
+12. Error Codes Reference
+Field
+Type
+Nullable
+Description
+AUTH_OTP_INVALID
+400
+NO
+OTP is wrong or has expired
+AUTH_OTP_RATE_LIMIT
+429
+NO
+Too many OTP requests — 3 per hour limit
+AUTH_TOKEN_EXPIRED
+401
+NO
+Access token expired — call /token/refresh/
+AUTH_TOKEN_INVALID
+401
+NO
+Token signature invalid or tampered
+PATIENT_NOT_FOUND
+404
+NO
+Patient record does not exist
+DOCTOR_UNAVAILABLE
+409
+NO
+Doctor is not currently accepting patients
+QUEUE_FULL
+503
+NO
+Doctor queue is full (> 30 patients)
+AI_TIMEOUT
+504
+NO
+Gemini API response exceeded 8s timeout
+AI_CONTENT_POLICY
+422
+NO
+Gemini refused content due to safety filters
+STOCK_NOT_FOUND
+404
+NO
+Drug not found in clinic stock
+SYNC_CONFLICT
+409
+NO
+Conflict during offline sync — check data field
+VALIDATION_ERROR
+422
+NO
+Request body validation failed — field errors in data
+PERMISSION_DENIED
+403
+NO
+User does not have access to this resource
+RATE_LIMIT_EXCEEDED
+429
+NO
+API rate limit hit — 100 req/min per user
+SERVER_ERROR
+500
+NO
+Unhandled exception — log to Sentry, return error.id
+13. Testing
+13.1 Coverage Targets
+Auth (OTP, JWT)
+95%+ — critical security path, test all edge cases
+AI chat & triage
+80%+ — mock Gemini API responses in unit tests
+Sync endpoint
+90%+ — complex delta logic, test conflict cases
+Stock prediction
+70%+ — use seed fixture with known daily usage data
+Agora token gen
+85%+ — test expiry, channel name, uid handling
+Nearby search
+70%+ — mock Google Maps API responses
+13.2 Commands
+python manage.py test --keepdb              # all tests
+pytest --cov=. --cov-report=html            # with coverage
+pytest tests/test_ai.py -k "triage" -v      # specific module
+🌿  AarogyaPath Backend Handover — END OF DOCUMENT
+Questions? Ping the frontend team on Slack #aarogyapath-dev
