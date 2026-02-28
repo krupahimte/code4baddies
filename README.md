@@ -2,7 +2,7 @@
 # AarogyaPath - HealthTech Platform (Patient and Doctor)
 
 AarogyaPath is a dual-portal healthcare platform built for rural and low-bandwidth environments.  
-It includes a mobile-friendly patient web app and a separate doctor dashboard, both powered by a Django REST API.
+It includes a mobile-friendly patient web app and a separate doctor dashboard.
 
 ## Project Overview
 The system is structured around lightweight frontends, an AI-assisted triage engine, secure data handling, and multilingual support.  
@@ -51,5 +51,6 @@ It focuses on:
 - PostgreSQL 
 - Gemini 1.5 Flash API (AI triage and chat)  
 - Google Translate API  
+
 
 
